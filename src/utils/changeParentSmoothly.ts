@@ -1,5 +1,5 @@
 import type { Ref } from 'vue'
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 
 const getRect = (element: HTMLElement) => element.getBoundingClientRect()
 
@@ -23,6 +23,8 @@ export default async function changeParentSmoothly(
       tempChild.value.style.minWidth = `${initialRect.width}px`
       tempChild.value.style.minHeight = `${initialRect.height}px`
       toParent.value.appendChild(tempChild.value)
+
+      await nextTick()
 
       initialRect = getRect(child.value)
       const finalRect = getRect(tempChild.value)
