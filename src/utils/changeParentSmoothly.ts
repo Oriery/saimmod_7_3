@@ -8,7 +8,7 @@ const currentlyProcessedHtmlElements: HTMLElement[] = []
 export default async function changeParentSmoothly(
   child: Ref<HTMLElement>,
   toParent: Ref<HTMLElement>,
-  transitionTime: number = 400,
+  transitionTime: number = 1000,
 ) {
   if (currentlyProcessedHtmlElements.includes(child.value)) {
     throw new Error('This element is already being moved')
@@ -20,11 +20,17 @@ export default async function changeParentSmoothly(
       let initialRect = getRect(child.value)
 
       const tempChild = ref(document.createElement('div'))
+      toParent.value.appendChild(tempChild.value)
+      tempChild.value.style.transition = `min-height ${transitionTime}ms ease-in-out, min-width ${transitionTime}ms ease-in-out`
+      tempChild.value.style.minWidth = '0'
+      tempChild.value.style.minHeight = '0'
+      tempChild.value.style.backgroundColor = 'red'
+      
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
       tempChild.value.style.minWidth = `${initialRect.width}px`
       tempChild.value.style.minHeight = `${initialRect.height}px`
-      toParent.value.appendChild(tempChild.value)
 
-      await nextTick()
 
       initialRect = getRect(child.value)
       const finalRect = getRect(tempChild.value)
