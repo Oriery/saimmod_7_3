@@ -16,10 +16,13 @@
   </header>
 
   <RouterView class="grow" />
+
+  <TestTransition />
 </template>
 
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import TestTransition from './components/TestTransition.vue'
 
 const links = [
   { name: 'Home', path: '/' },
