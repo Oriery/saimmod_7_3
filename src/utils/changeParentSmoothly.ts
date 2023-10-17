@@ -17,14 +17,15 @@ export default async function changeParentSmoothly(
 
   try {
     if (child.value) {
-      const initialRect = getRect(child.value)
+      let initialRect = getRect(child.value)
 
       const tempChild = ref(document.createElement('div'))
+      tempChild.value.style.minWidth = `${initialRect.width}px`
+      tempChild.value.style.minHeight = `${initialRect.height}px`
       toParent.value.appendChild(tempChild.value)
 
+      initialRect = getRect(child.value)
       const finalRect = getRect(tempChild.value)
-
-      tempChild.value.remove()
 
       const dx = finalRect.left - initialRect.left
       const dy = finalRect.top - initialRect.top
@@ -43,6 +44,7 @@ export default async function changeParentSmoothly(
           'transitionend',
           async (e) => {
             toParent.value.appendChild(child.value)
+            tempChild.value.remove()
 
             child.value.style.transform = tempStyleTransform
             child.value.style.transition = tempStyleTransition
