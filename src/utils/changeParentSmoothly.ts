@@ -8,7 +8,7 @@ const currentlyProcessedHtmlElements: HTMLElement[] = []
 export default async function changeParentSmoothly(
   child: Ref<HTMLElement>,
   toParent: Ref<HTMLElement>,
-  transitionTime: number = 1000,
+  transitionTime: number = 400,
 ) {
   if (currentlyProcessedHtmlElements.includes(child.value)) {
     throw new Error('This element is already being moved')
@@ -17,6 +17,7 @@ export default async function changeParentSmoothly(
 
   try {
     if (child.value) {
+      const fromParent = ref(child.value.parentElement)
       let initialRect = getRect(child.value)
 
       const tempChild = ref(document.createElement('div'))
@@ -24,13 +25,12 @@ export default async function changeParentSmoothly(
       tempChild.value.style.transition = `min-height ${transitionTime}ms ease-in-out, min-width ${transitionTime}ms ease-in-out`
       tempChild.value.style.minWidth = '0'
       tempChild.value.style.minHeight = '0'
-      tempChild.value.style.backgroundColor = 'red'
-      
+      //tempChild.value.style.backgroundColor = 'red'
+
       await new Promise((resolve) => setTimeout(resolve, 50))
 
       tempChild.value.style.minWidth = `${initialRect.width}px`
       tempChild.value.style.minHeight = `${initialRect.height}px`
-
 
       initialRect = getRect(child.value)
       const finalRect = getRect(tempChild.value)
@@ -51,11 +51,20 @@ export default async function changeParentSmoothly(
         child.value.addEventListener(
           'transitionend',
           async (e) => {
+            if (fromParent.value) {
+              fromParent.value.insertBefore(tempChild.value, child.value)
+            }
             toParent.value.appendChild(child.value)
-            tempChild.value.remove()
 
             child.value.style.transform = tempStyleTransform
             child.value.style.transition = tempStyleTransition
+
+            await new Promise((resolve) => setTimeout(resolve, 50))
+            tempChild.value.style.minWidth = '0'
+            tempChild.value.style.minHeight = '0'
+
+            await new Promise((resolve) => setTimeout(resolve, transitionTime))
+            tempChild.value.remove()
 
             resolve(e)
           },
