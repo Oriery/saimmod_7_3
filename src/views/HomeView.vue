@@ -14,12 +14,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onUnmounted } from 'vue'
 import {
-  Queue,
   Generator,
   Processor,
-  Ticket,
   WhatToDoOnBlockedOutput,
   SystemOfMassService,
 } from '../types/systemsOfMassService'
