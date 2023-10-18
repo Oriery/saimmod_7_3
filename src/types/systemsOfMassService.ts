@@ -90,15 +90,15 @@ export class Ticket implements Tickable {
   public get id(): string {
     return this._id
   }
-  ticksAlive: number
+  ticksAlive: Ref<number>
 
   constructor() {
     this._id = Math.random().toString(36).slice(2)
-    this.ticksAlive = 0
+    this.ticksAlive = ref(0)
   }
 
   async tick() {
-    this.ticksAlive++
+    this.ticksAlive.value++
   }
 }
 
