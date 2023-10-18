@@ -17,6 +17,7 @@
   "dependencies": {
     "@mdi/font": "^7.2.96",
     "pinia": "^2.1.6",
+    "uniqolor": "^1.1.0",
     "vue": "^3.3.4",
     "vue-router": "^4.2.4",
     "vuetify": "^3.3.16"
