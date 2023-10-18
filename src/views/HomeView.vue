@@ -2,7 +2,7 @@
   <main>
     <div
       v-if="sysMasSer"
-      class="grid gap-2 grid-cols-2"
+      class="grid gap-2 grid-cols-3"
     >
       <NodeBase
         v-for="node in sysMasSer.nodes"
@@ -38,10 +38,14 @@ sysMasSer = new SystemOfMassService()
 const generator = new Generator(0.5, WhatToDoOnBlockedOutput.WAIT)
 sysMasSer.addNode(generator)
 
-const processor = new Processor(0.6)
+const processor = new Processor(0.6, WhatToDoOnBlockedOutput.DROP)
 sysMasSer.addNode(processor)
 
+const processor2 = new Processor(0.6)
+sysMasSer.addNode(processor2)
+
 generator.addOutwardNode(processor)
+processor.addOutwardNode(processor2)
 
 interval = setInterval(() => {
   if (sysMasSer) {

@@ -289,11 +289,17 @@ export class Processor extends BaseNode {
 
   async tick(sysMassService: SystemOfMassService) {
     if (this._willProcessTicketOnCurrentTick) {
-      const ticket = this.ticketsInside.value.shift()
-      if (ticket) {
-        sysMassService.removeTicket(ticket)
+      if (this.outwardNodes.length === 0) {
+        const ticket = this.ticketsInside.value.shift()
+        if (ticket) {
+          sysMassService.removeTicket(ticket)
+        }
+      } else {
+        const res = await this.tryPushTicketOutward()
+        if (res !== PushResult.PUSHED) {
+          console.log(`Proc ${this.id} out picket was not pushed: ${res}`)
+        }
       }
-      // TODO: if there are outward nodes, push ticket to one of them instead of removing it
     }
   }
 }

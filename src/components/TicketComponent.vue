@@ -19,6 +19,6 @@ const props = defineProps<{
 
 let color = uniqolor(props.ticket.id, {
   saturation: [35, 70],
-  lightness: 25,
+  lightness: [10, 20],
 }).color
 </script>
