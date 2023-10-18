@@ -26,7 +26,7 @@ export default async function changeParentSmoothly(
       if (currentlyProcessedHtmlElements.get(child.value)?.forceFinish) {
         await currentlyProcessedHtmlElements.get(child.value)?.forceFinish?.()
       } else {
-        console.log('No forceFinish function')
+        //console.log('No forceFinish function')
       }
     }
     currentlyProcessedHtmlElements.set(child.value, animForHtmlEl)
@@ -34,7 +34,7 @@ export default async function changeParentSmoothly(
     if (child.value) {
       const fromParent = ref(child.value.parentElement)
       if (fromParent.value === toParent.value) {
-        console.log('same parent')
+        //console.log('same parent')
         return
       }
       let initialRect = getRect(child.value)
@@ -47,7 +47,7 @@ export default async function changeParentSmoothly(
 
       await new Promise((resolve) => setTimeout(resolve, 50))
       if (currentlyProcessedHtmlElements.get(child.value) !== animForHtmlEl) {
-        console.log('new transition has started')
+        //console.log('new transition has started')
         return
       }
 
@@ -60,7 +60,7 @@ export default async function changeParentSmoothly(
       const dx = finalRect.left - initialRect.left
       const dy = finalRect.top - initialRect.top
 
-      console.log(`dx: ${dx}, dy: ${dy}`)
+      //console.log(`dx: ${dx}, dy: ${dy}`)
 
       const tempStyleTransform = child.value.style.transform
       const tempStyleTransition = child.value.style.transition
@@ -70,7 +70,7 @@ export default async function changeParentSmoothly(
 
       await new Promise((resolve) => {
         animForHtmlEl.forceFinish = async () => {
-          console.log('force finish')
+          //console.log('force finish')
 
           animForHtmlEl.element.style.transform = tempStyleTransform
           animForHtmlEl.element.style.transition = tempStyleTransition
@@ -85,7 +85,7 @@ export default async function changeParentSmoothly(
           'transitionend',
           async (e) => {
             if (currentlyProcessedHtmlElements.get(child.value) !== animForHtmlEl) {
-              console.log('new transition has started')
+              //console.log('new transition has started')
               resolve(null)
               return
             }
