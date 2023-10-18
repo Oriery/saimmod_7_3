@@ -115,7 +115,7 @@ export default async function changeParentSmoothly(
   } finally {
     if (currentlyProcessedHtmlElements.get(child.value) === animForHtmlEl) {
       currentlyProcessedHtmlElements.delete(child.value)
-      if (animForHtmlEl.element) {
+      if (animForHtmlEl.element && toParent.value && animForHtmlEl.element.parentElement !== toParent.value) {
         toParent.value?.appendChild(animForHtmlEl.element)
       }
     }
