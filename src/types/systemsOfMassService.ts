@@ -220,7 +220,9 @@ export class Generator extends BaseNode {
     this.isNotGeneratingBecauseOfBlockedOutput =
       (await this.findOutwardNodeReadyToReceiveTicket()) === null
 
+    // TODO: should generate but drop if _whatToDoOnBlockedOutput === WhatToDoOnBlockedOutput.DROP
     if (this.isNotGeneratingBecauseOfBlockedOutput) {
+      console.log(`Gen ${this.id} Blocked output`)
       return
     }
 
@@ -233,7 +235,6 @@ export class Generator extends BaseNode {
       if (res !== PushResult.PUSHED) {
         throw new Error('Ticket was not pushed')
       }
-      console.log(`Gen ${this.id} Generated ticket`)
     }
   }
 }
@@ -288,16 +289,18 @@ export class Processor extends BaseNode {
   }
 
   async tick(sysMassService: SystemOfMassService) {
-    if (this._willProcessTicketOnCurrentTick) {
+    if (this.ticketsInside.value.length && this._willProcessTicketOnCurrentTick) {
       if (this.outwardNodes.length === 0) {
         const ticket = this.ticketsInside.value.shift()
         if (ticket) {
           sysMassService.removeTicket(ticket)
+        } else {
+          throw new Error('No ticket to remove')
         }
       } else {
         const res = await this.tryPushTicketOutward()
-        if (res !== PushResult.PUSHED) {
-          console.log(`Proc ${this.id} out picket was not pushed: ${res}`)
+        if (res === PushResult.DROPPED) {
+          console.log(`Proc ${this.id} dropped out ticket`)
         }
       }
     }
