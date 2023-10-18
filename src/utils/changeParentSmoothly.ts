@@ -19,6 +19,7 @@ export default async function changeParentSmoothly(
     element: child.value,
     forceFinish: null,
   }
+  const tempChild = ref(document.createElement('div'))
 
   try {
     if (currentlyProcessedHtmlElements.get(child.value)) {
@@ -38,7 +39,6 @@ export default async function changeParentSmoothly(
       }
       let initialRect = getRect(child.value)
 
-      const tempChild = ref(document.createElement('div'))
       toParent.value.appendChild(tempChild.value)
       tempChild.value.style.transition = `min-height ${transitionTime}ms ease-in-out, min-width ${transitionTime}ms ease-in-out`
       tempChild.value.style.minWidth = '0'
@@ -48,8 +48,6 @@ export default async function changeParentSmoothly(
       await new Promise((resolve) => setTimeout(resolve, 50))
       if (currentlyProcessedHtmlElements.get(child.value) !== animForHtmlEl) {
         console.log('new transition has started')
-        tempChild.value.remove()
-        toParent.value.appendChild(animForHtmlEl.element)
         return
       }
 
@@ -76,9 +74,6 @@ export default async function changeParentSmoothly(
 
           animForHtmlEl.element.style.transform = tempStyleTransform
           animForHtmlEl.element.style.transition = tempStyleTransition
-
-          tempChild.value.remove()
-          toParent.value.appendChild(animForHtmlEl.element)
 
           await new Promise((resolve) => setTimeout(resolve, 50))
 
@@ -108,7 +103,6 @@ export default async function changeParentSmoothly(
             tempChild.value.style.minHeight = '0'
 
             await new Promise((resolve) => setTimeout(resolve, transitionTime))
-            tempChild.value.remove()
 
             resolve(null)
           },
@@ -121,6 +115,10 @@ export default async function changeParentSmoothly(
   } finally {
     if (currentlyProcessedHtmlElements.get(child.value) === animForHtmlEl) {
       currentlyProcessedHtmlElements.delete(child.value)
+      if (animForHtmlEl.element) {
+        toParent.value?.appendChild(animForHtmlEl.element)
+      }
     }
+    tempChild.value?.remove()
   }
 }
