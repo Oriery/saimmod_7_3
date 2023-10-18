@@ -1,23 +1,41 @@
 import type { Ref } from 'vue'
-import { ref, nextTick } from 'vue'
+import { ref } from 'vue'
 
 const getRect = (element: HTMLElement) => element.getBoundingClientRect()
 
-const currentlyProcessedHtmlElements: HTMLElement[] = []
+type AnimationForHtmlElement = {
+  element: HTMLElement
+  forceFinish: (() => Promise<void>) | null
+}
+
+const currentlyProcessedHtmlElements: Map<HTMLElement, AnimationForHtmlElement> = new Map()
 
 export default async function changeParentSmoothly(
   child: Ref<HTMLElement>,
   toParent: Ref<HTMLElement>,
   transitionTime: number = 400,
 ) {
-  if (currentlyProcessedHtmlElements.includes(child.value)) {
-    throw new Error('This element is already being moved')
+  const animForHtmlEl : AnimationForHtmlElement = {
+    element: child.value,
+    forceFinish: null,
   }
-  currentlyProcessedHtmlElements.push(child.value)
 
   try {
+    if (currentlyProcessedHtmlElements.get(child.value)) {
+      if (currentlyProcessedHtmlElements.get(child.value)?.forceFinish) {
+        await currentlyProcessedHtmlElements.get(child.value)?.forceFinish?.()
+      } else {
+        console.log('No forceFinish function')
+      }
+    }
+    currentlyProcessedHtmlElements.set(child.value, animForHtmlEl)
+
     if (child.value) {
       const fromParent = ref(child.value.parentElement)
+      if (fromParent.value === toParent.value) {
+        console.log('same parent')
+        return
+      }
       let initialRect = getRect(child.value)
 
       const tempChild = ref(document.createElement('div'))
@@ -28,6 +46,12 @@ export default async function changeParentSmoothly(
       //tempChild.value.style.backgroundColor = 'red'
 
       await new Promise((resolve) => setTimeout(resolve, 50))
+      if (currentlyProcessedHtmlElements.get(child.value) !== animForHtmlEl) {
+        console.log('new transition has started')
+        tempChild.value.remove()
+        toParent.value.appendChild(animForHtmlEl.element)
+        return
+      }
 
       tempChild.value.style.minWidth = `${initialRect.width}px`
       tempChild.value.style.minHeight = `${initialRect.height}px`
@@ -47,10 +71,30 @@ export default async function changeParentSmoothly(
       child.value.style.transform += ' ' + `translate(${dx}px, ${dy}px)`
 
       await new Promise((resolve) => {
+        animForHtmlEl.forceFinish = async () => {
+          console.log('force finish')
+
+          animForHtmlEl.element.style.transform = tempStyleTransform
+          animForHtmlEl.element.style.transition = tempStyleTransition
+
+          tempChild.value.remove()
+          toParent.value.appendChild(animForHtmlEl.element)
+
+          await new Promise((resolve) => setTimeout(resolve, 50))
+
+          resolve(null)
+        }
+
         // add handler to wait for transition to end
         child.value.addEventListener(
           'transitionend',
           async (e) => {
+            if (currentlyProcessedHtmlElements.get(child.value) !== animForHtmlEl) {
+              console.log('new transition has started')
+              resolve(null)
+              return
+            }
+
             if (fromParent.value) {
               fromParent.value.insertBefore(tempChild.value, child.value)
             }
@@ -66,7 +110,7 @@ export default async function changeParentSmoothly(
             await new Promise((resolve) => setTimeout(resolve, transitionTime))
             tempChild.value.remove()
 
-            resolve(e)
+            resolve(null)
           },
           { once: true },
         )
@@ -75,6 +119,8 @@ export default async function changeParentSmoothly(
       console.error('One of the elements is null')
     }
   } finally {
-    currentlyProcessedHtmlElements.splice(currentlyProcessedHtmlElements.indexOf(child.value), 1)
+    if (currentlyProcessedHtmlElements.get(child.value) === animForHtmlEl) {
+      currentlyProcessedHtmlElements.delete(child.value)
+    }
   }
 }

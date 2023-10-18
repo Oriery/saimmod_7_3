@@ -37,7 +37,7 @@ import changeParentSmoothly from '../utils/changeParentSmoothly'
 const parent0 = ref<HTMLElement | null>(null)
 const parent1 = ref<HTMLElement | null>(null)
 const child = ref<HTMLElement | null>(null)
-const inParent0 = ref(true)
+let flipFlop = true
 
 async function toggle() {
   if (!parent1.value || !parent0.value || !child.value) {
@@ -45,12 +45,12 @@ async function toggle() {
     return
   }
 
-  if (inParent0.value) {
+  if (flipFlop) {
+    flipFlop = false
     await changeParentSmoothly(child as Ref<HTMLElement>, parent1 as Ref<HTMLElement>)
-    inParent0.value = false
   } else {
+    flipFlop = true
     await changeParentSmoothly(child as Ref<HTMLElement>, parent0 as Ref<HTMLElement>)
-    inParent0.value = true
   }
 }
 </script>
