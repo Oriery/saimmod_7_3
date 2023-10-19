@@ -1,5 +1,6 @@
 import type { Ref } from 'vue'
 import { ref } from 'vue'
+import type { VisualContainer } from './visualized'
 
 interface WithId {
   id: string
@@ -69,6 +70,8 @@ export class SystemOfMassService {
     } else {
       throw new Error('Ticket not found')
     }
+
+    ticket.onTicketDestroyed.forEach((cb) => cb())
   }
 
   addNode(node: BaseNode) {
@@ -101,10 +104,21 @@ export class Ticket implements Tickable {
     return this._id
   }
   ticksAlive: Ref<number>
+  private _containerNode: Ref<BaseNode | null>
+  public get containerNode(): BaseNode | null {
+    return this._containerNode.value
+  }
+  public set containerNode(value: BaseNode | null) {
+    this._containerNode.value = value
+    this.onContainerNodeChanged.forEach((cb) => cb(value))
+  }
+  onTicketDestroyed: (() => void)[] = []
+  onContainerNodeChanged: ((newContainerNode: BaseNode | null) => void)[] = []
 
   constructor() {
     this._id = Math.random().toString(36).slice(2)
     this.ticksAlive = ref(0)
+    this._containerNode = ref(null)
   }
 
   tick() {
@@ -112,7 +126,7 @@ export class Ticket implements Tickable {
   }
 }
 
-export abstract class BaseNode implements Tickable {
+export abstract class BaseNode implements Tickable, VisualContainer {
   private _id: string
   public get id(): string {
     return this._id
@@ -130,6 +144,7 @@ export abstract class BaseNode implements Tickable {
   protected abstract _whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput
   protected abstract canReceiveTicket(): boolean
   protected _sysMassService: SystemOfMassService
+  refToContainer: Ref<HTMLElement | null> = ref(null)
 
   constructor(sysMassService: SystemOfMassService) {
     this._id = Math.random().toString(36).slice(2)
@@ -196,6 +211,8 @@ export abstract class BaseNode implements Tickable {
       throw new Error('Node is overfull')
     }
 
+    ticket.containerNode = this
+
     this.afterReceiveTicket()
   }
 
@@ -219,6 +236,8 @@ export class Generator extends BaseNode {
   public get nodeType(): NodeType {
     return this._nodeType
   }
+
+  onTicketCreated: ((ticket: Ticket) => void)[] = []
 
   constructor(
     sysMassService: SystemOfMassService,
@@ -255,6 +274,8 @@ export class Generator extends BaseNode {
       const newTicket = new Ticket()
       this.ticketsInside.value.push(newTicket)
       this._sysMassService.addTicket(newTicket)
+      newTicket.containerNode = this
+      this.onTicketCreated.forEach((cb) => cb(newTicket))
 
       const res = this.tryPushTicketOutward()
       if (res !== PushResult.PUSHED) {

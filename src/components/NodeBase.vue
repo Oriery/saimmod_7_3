@@ -18,30 +18,62 @@
         </p>
       </div>
     </div>
-    <div class="flex flex-col gap-2 border-t-2 border-slate-700 pt-2">
-      <TicketComponent
-        v-if="node.ticketsInside.value[0]"
-        v-bind:key="node.ticketsInside.value[0].id"
-        :ticket="node.ticketsInside.value[0]"
-      />
-      <div class="grid grid-cols-3 gap-2">
-        <TicketComponent
-          v-for="ticket in node.ticketsInside.value.filter((_, i) => i > 0)"
-          v-bind:key="ticket.id"
-          :ticket="ticket"
-        />
-      </div>
-    </div>
+    <div
+      class="flex flex-col gap-2 border-t-2 border-slate-700 pt-2"
+      ref="parentForTickets"
+    ></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { BaseNode, NODE_TYPE_TO_NAME, NodeType } from '@/types/systemsOfMassService'
+import {
+  BaseNode,
+  NODE_TYPE_TO_NAME,
+  NodeType,
+  Ticket,
+  Generator,
+} from '@/types/systemsOfMassService'
 import TicketComponent from './TicketComponent.vue'
+import { ref, h, render, onMounted, watch } from 'vue'
+import changeParentSmoothly from '@/utils/changeParentSmoothly'
 
-defineProps<{
+const parentForTickets = ref<HTMLElement | null>(null)
+
+const props = defineProps<{
   node: BaseNode
 }>()
+
+const node = props.node
+
+onMounted(() => {
+  node.refToContainer = parentForTickets
+})
+
+if (node.nodeType === NodeType.GENERATOR) {
+  ;(node as Generator).onTicketCreated.push(async (ticket: Ticket) => {
+    if (!parentForTickets.value) {
+      throw new Error('parentForTickets is null')
+    }
+
+    const container = document.createElement('div')
+    parentForTickets.value.appendChild(container)
+
+    const vnode = h(TicketComponent, { ticket })
+    render(vnode, container)
+
+    ticket.onContainerNodeChanged.push(async (newContainerNode: BaseNode | null): Promise<void> => {
+      if (!newContainerNode) {
+        throw new Error('newContainerNode is null')
+      }
+
+      await changeParentSmoothly(ref(container), ref(newContainerNode.refToContainer), 200)
+    })
+
+    ticket.onTicketDestroyed.push(() => {
+      container.remove()
+    })
+  })
+}
 
 const NODE_TYPE_TO_BG_COLOR = {
   [NodeType.GENERATOR]: 'bg-emerald-950',

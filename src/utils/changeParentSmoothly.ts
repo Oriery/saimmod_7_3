@@ -11,11 +11,20 @@ type AnimationForHtmlElement = {
 const currentlyProcessedHtmlElements: Map<HTMLElement, AnimationForHtmlElement> = new Map()
 
 export default async function changeParentSmoothly(
-  child: Ref<HTMLElement>,
-  toParent: Ref<HTMLElement>,
+  childParam: Ref<HTMLElement | null>,
+  toParentParam: Ref<HTMLElement | null>,
   transitionTime: number = 400,
 ) {
-  const animForHtmlEl : AnimationForHtmlElement = {
+  if (!childParam.value) {
+    throw new Error('child is null')
+  }
+  if (!toParentParam.value) {
+    throw new Error('toParent is null')
+  }
+  const child = ref(childParam.value)
+  const toParent = ref(toParentParam.value)
+
+  const animForHtmlEl: AnimationForHtmlElement = {
     element: child.value,
     forceFinish: null,
   }
@@ -110,12 +119,16 @@ export default async function changeParentSmoothly(
         )
       })
     } else {
-      console.error('One of the elements is null')
+      //console.error('One of the elements is null')
     }
   } finally {
     if (currentlyProcessedHtmlElements.get(child.value) === animForHtmlEl) {
       currentlyProcessedHtmlElements.delete(child.value)
-      if (animForHtmlEl.element && toParent.value && animForHtmlEl.element.parentElement !== toParent.value) {
+      if (
+        animForHtmlEl.element &&
+        toParent.value &&
+        animForHtmlEl.element.parentElement !== toParent.value
+      ) {
         toParent.value?.appendChild(animForHtmlEl.element)
       }
     }
