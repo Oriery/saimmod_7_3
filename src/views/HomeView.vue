@@ -33,7 +33,7 @@ console.log(
 
 sysMasSer = new SystemOfMassService()
 
-const generator = new Generator(0.5, WhatToDoOnBlockedOutput.WAIT)
+const generator = new Generator(0.3, WhatToDoOnBlockedOutput.WAIT)
 sysMasSer.addNode(generator)
 
 const processor = new Processor(0.6, WhatToDoOnBlockedOutput.DROP)
