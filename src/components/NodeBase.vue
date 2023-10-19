@@ -9,7 +9,7 @@
       class=""
     >
       Outward nodes:
-      <div class="flex flex-col gap-2 align-end">
+      <div class="flex flex-col align-end">
         <p
           v-for="n in node.outwardNodes"
           v-bind:key="n.id"
@@ -19,7 +19,7 @@
       </div>
     </div>
     <div
-      class="flex flex-col gap-2 border-t-2 border-slate-700 pt-2"
+      class="flex gap-2 flex-col border-t-2 border-slate-700 pt-2 min-h-[10rem]"
       ref="parentForTickets"
     ></div>
   </div>
@@ -66,7 +66,7 @@ if (node.nodeType === NodeType.GENERATOR) {
         throw new Error('newContainerNode is null')
       }
 
-      await changeParentSmoothly(ref(container), ref(newContainerNode.refToContainer), 200)
+      await changeParentSmoothly(ref(container), ref(newContainerNode.refToContainer), 300)
     })
 
     ticket.onTicketDestroyed.push(() => {
