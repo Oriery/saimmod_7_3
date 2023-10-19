@@ -179,7 +179,11 @@ export abstract class BaseNode implements Tickable {
     if (this.ticketsInside.value.length > this.capacity) {
       throw new Error('Node is overfull')
     }
+
+    this.afterReceiveTicket()
   }
+
+  protected afterReceiveTicket(): void {}
 
   addOutwardNode(node: BaseNode) {
     this.outwardNodes.push(node)
@@ -250,7 +254,8 @@ export class Queue extends BaseNode {
   }
 
   canReceiveTicket() {
-    return true // TODO:
+    this.tryPushTicketOutward()
+    return this.ticketsInside.value.length < this.capacity
   }
 
   tick() {
@@ -259,7 +264,9 @@ export class Queue extends BaseNode {
     }
   }
 
-  // TODO: on receive ticket, streight away try to push it outward
+  protected afterReceiveTicket(): void {
+    this.tryPushTicketOutward()
+  }
 }
 
 export class Processor extends BaseNode {
@@ -312,7 +319,8 @@ export class Processor extends BaseNode {
         } else {
           throw new Error('No ticket to remove')
         }
-      } else { // If there are outward nodes, try to push ticket outward
+      } else {
+        // If there are outward nodes, try to push ticket outward
         const res = this.tryPushTicketOutward()
         if (res === PushResult.DROPPED) {
           console.log(`Proc ${this.id} dropped out ticket`)
@@ -320,5 +328,4 @@ export class Processor extends BaseNode {
       }
     }
   }
-
 }
