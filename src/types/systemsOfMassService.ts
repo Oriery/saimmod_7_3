@@ -22,6 +22,20 @@ export enum WhatToDoOnBlockedOutput {
   DROP,
 }
 
+export enum NodeType {
+  GENERATOR,
+  QUEUE,
+  PROCESSOR,
+}
+
+// TODO: add classes SINK and GARBAGE for processed and dropped tickets
+
+export const NODE_TYPE_TO_NAME = {
+  [NodeType.GENERATOR]: 'Generator',
+  [NodeType.QUEUE]: 'Queue',
+  [NodeType.PROCESSOR]: 'Processor',
+}
+
 export class SystemOfMassService {
   private _nodes: BaseNode[]
   public get nodes(): BaseNode[] {
@@ -103,6 +117,8 @@ export abstract class BaseNode implements Tickable {
   public get id(): string {
     return this._id
   }
+
+  abstract nodeType: NodeType
 
   private _ticketsInside: Ref<Ticket[]>
   public get ticketsInside(): Ref<Ticket[]> {
@@ -199,6 +215,11 @@ export class Generator extends BaseNode {
   isNotGeneratingBecauseOfBlockedOutput: boolean
   private _willGenerateTicketOnCurrentTick: boolean
 
+  private _nodeType: NodeType = NodeType.GENERATOR
+  public get nodeType(): NodeType {
+    return this._nodeType
+  }
+
   constructor(
     sysMassService: SystemOfMassService,
     probabilityOfNotGeneratingTicket: number,
@@ -247,6 +268,11 @@ export class Queue extends BaseNode {
   capacity: number
   protected _whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput
 
+  private _nodeType: NodeType = NodeType.QUEUE
+  public get nodeType(): NodeType {
+    return this._nodeType
+  }
+
   constructor(sysMassService: SystemOfMassService, capacity: number) {
     super(sysMassService)
     this.capacity = capacity
@@ -275,6 +301,11 @@ export class Processor extends BaseNode {
   protected _whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput
   private _willProcessTicketOnCurrentTick: boolean
   private _didTryProcessTicketOnCurrentTickAlready: boolean
+
+  private _nodeType: NodeType = NodeType.PROCESSOR
+  public get nodeType(): NodeType {
+    return this._nodeType
+  }
 
   constructor(
     sysMassService: SystemOfMassService,
