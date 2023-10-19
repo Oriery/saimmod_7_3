@@ -33,14 +33,9 @@ console.log(
 
 sysMasSer = new SystemOfMassService()
 
-const generator = new Generator(0.3, WhatToDoOnBlockedOutput.WAIT)
-sysMasSer.addNode(generator)
-
-const processor = new Processor(0.6, WhatToDoOnBlockedOutput.DROP)
-sysMasSer.addNode(processor)
-
-const processor2 = new Processor(0.6)
-sysMasSer.addNode(processor2)
+const generator = new Generator(sysMasSer, 0.3, WhatToDoOnBlockedOutput.WAIT)
+const processor = new Processor(sysMasSer, 0.6, WhatToDoOnBlockedOutput.DROP)
+const processor2 = new Processor(sysMasSer, 0.6)
 
 generator.addOutwardNode(processor)
 processor.addOutwardNode(processor2)

@@ -6,8 +6,8 @@ interface WithId {
 }
 
 interface Tickable extends WithId {
-  tick(sysMassService: SystemOfMassService): void
-  beforeTick?(sysMassService: SystemOfMassService): void
+  tick(): void
+  beforeTick?(): void
 }
 
 enum PushResult {
@@ -68,13 +68,13 @@ export class SystemOfMassService {
     // do beforeTick
     for (const tickable of this._tickables) {
       if (tickable.beforeTick) {
-        tickable.beforeTick(this)
+        tickable.beforeTick()
       }
     }
 
     // do tick
     for (const tickable of this._tickables) {
-      tickable.tick(this)
+      tickable.tick()
     }
 
     this._tick++
@@ -112,18 +112,21 @@ export abstract class BaseNode implements Tickable {
   outwardNodes: BaseNode[]
   abstract capacity: number
   protected abstract _whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput
-  protected abstract canReceiveTicket(sysMassService: SystemOfMassService): boolean
+  protected abstract canReceiveTicket(): boolean
+  protected _sysMassService: SystemOfMassService
 
-  constructor() {
+  constructor(sysMassService: SystemOfMassService) {
     this._id = Math.random().toString(36).slice(2)
     this._ticketsInside = ref([])
     this.outwardNodes = []
+    this._sysMassService = sysMassService
+    this._sysMassService.addNode(this)
   }
 
-  tryPushTicketOutward(sysMassService: SystemOfMassService): PushResult {
+  tryPushTicketOutward(): PushResult {
     const ticket = this.ticketsInside.value[0]
     if (ticket) {
-      const nodeReadyToReceiveTicket = this.findOutwardNodeReadyToReceiveTicket(sysMassService)
+      const nodeReadyToReceiveTicket = this.findOutwardNodeReadyToReceiveTicket()
 
       if (nodeReadyToReceiveTicket) {
         // move ticket to outward node
@@ -152,11 +155,11 @@ export abstract class BaseNode implements Tickable {
     return PushResult.NO_TICKET_TO_PUSH
   }
 
-  findOutwardNodeReadyToReceiveTicket(sysMassService: SystemOfMassService): BaseNode | null {
+  findOutwardNodeReadyToReceiveTicket(): BaseNode | null {
     let nodeReadyToReceiveTicket: BaseNode | null = null
     for (const i in this.outwardNodes) {
       const node = this.outwardNodes[i]
-      if (node.canReceiveTicket(sysMassService)) {
+      if (node.canReceiveTicket()) {
         nodeReadyToReceiveTicket = node
         break
       }
@@ -182,7 +185,7 @@ export abstract class BaseNode implements Tickable {
     this.outwardNodes.push(node)
   }
 
-  abstract tick(sysMassService: SystemOfMassService): void
+  abstract tick(): void
 }
 
 export class Generator extends BaseNode {
@@ -193,10 +196,11 @@ export class Generator extends BaseNode {
   private _willGenerateTicketOnCurrentTick: boolean
 
   constructor(
+    sysMassService: SystemOfMassService,
     probabilityOfNotGeneratingTicket: number,
     whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput,
   ) {
-    super()
+    super(sysMassService)
     this.probabilityOfNotGeneratingTicket = probabilityOfNotGeneratingTicket
     this.capacity = 0
     this._whatToDoOnBlockedOutput = whatToDoOnBlockedOutput
@@ -213,8 +217,8 @@ export class Generator extends BaseNode {
     this._willGenerateTicketOnCurrentTick = Math.random() > this.probabilityOfNotGeneratingTicket
   }
 
-  tick(sysMassService: SystemOfMassService) {
-    this.isNotGeneratingBecauseOfBlockedOutput = this.findOutwardNodeReadyToReceiveTicket(sysMassService) === null
+  tick() {
+    this.isNotGeneratingBecauseOfBlockedOutput = this.findOutwardNodeReadyToReceiveTicket() === null
 
     // TODO: should generate but drop if _whatToDoOnBlockedOutput === WhatToDoOnBlockedOutput.DROP
     if (this.isNotGeneratingBecauseOfBlockedOutput) {
@@ -225,9 +229,9 @@ export class Generator extends BaseNode {
     if (this._willGenerateTicketOnCurrentTick) {
       const newTicket = new Ticket()
       this.ticketsInside.value.push(newTicket)
-      sysMassService.addTicket(newTicket)
+      this._sysMassService.addTicket(newTicket)
 
-      const res = this.tryPushTicketOutward(sysMassService)
+      const res = this.tryPushTicketOutward()
       if (res !== PushResult.PUSHED) {
         throw new Error('Ticket was not pushed')
       }
@@ -239,8 +243,8 @@ export class Queue extends BaseNode {
   capacity: number
   protected _whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput
 
-  constructor(capacity: number) {
-    super()
+  constructor(sysMassService: SystemOfMassService, capacity: number) {
+    super(sysMassService)
     this.capacity = capacity
     this._whatToDoOnBlockedOutput = WhatToDoOnBlockedOutput.WAIT
   }
@@ -249,8 +253,8 @@ export class Queue extends BaseNode {
     return true // TODO:
   }
 
-  tick(sysMassService: SystemOfMassService) {
-    while (this.tryPushTicketOutward(sysMassService) === PushResult.PUSHED) {
+  tick() {
+    while (this.tryPushTicketOutward() === PushResult.PUSHED) {
       // do nothing
     }
   }
@@ -266,10 +270,11 @@ export class Processor extends BaseNode {
   private _didTryProcessTicketOnCurrentTickAlready: boolean
 
   constructor(
+    sysMassService: SystemOfMassService,
     probabilityOfNotProcessingTicket: number,
     whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput = WhatToDoOnBlockedOutput.WAIT,
   ) {
-    super()
+    super(sysMassService)
     this.probabilityOfNotProcessingTicket = probabilityOfNotProcessingTicket
     this.capacity = 1
     this._whatToDoOnBlockedOutput = whatToDoOnBlockedOutput
@@ -277,8 +282,8 @@ export class Processor extends BaseNode {
     this._didTryProcessTicketOnCurrentTickAlready = false
   }
 
-  canReceiveTicket(sysMassService: SystemOfMassService) {
-    this.tryProcessTicket(sysMassService)
+  canReceiveTicket() {
+    this.tryProcessTicket()
     return this.ticketsInside.value.length === 0
   }
 
@@ -287,11 +292,11 @@ export class Processor extends BaseNode {
     this._didTryProcessTicketOnCurrentTickAlready = false
   }
 
-  tick(sysMassService: SystemOfMassService) {
-    this.tryProcessTicket(sysMassService)
+  tick() {
+    this.tryProcessTicket()
   }
 
-  tryProcessTicket(sysMassService: SystemOfMassService) {
+  tryProcessTicket() {
     if (this._didTryProcessTicketOnCurrentTickAlready) {
       return
     }
@@ -303,12 +308,12 @@ export class Processor extends BaseNode {
       if (this.outwardNodes.length === 0) {
         const ticket = this.ticketsInside.value.shift()
         if (ticket) {
-          sysMassService.removeTicket(ticket)
+          this._sysMassService.removeTicket(ticket)
         } else {
           throw new Error('No ticket to remove')
         }
       } else { // If there are outward nodes, try to push ticket outward
-        const res = this.tryPushTicketOutward(sysMassService)
+        const res = this.tryPushTicketOutward()
         if (res === PushResult.DROPPED) {
           console.log(`Proc ${this.id} dropped out ticket`)
         }
