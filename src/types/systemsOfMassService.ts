@@ -177,6 +177,7 @@ export abstract class BaseNode implements Tickable, VisualContainer {
           if (ticketFromInside !== ticket) {
             throw new Error('Ticket was not the same as the one that was found')
           }
+          this._sysMassService.removeTicket(ticket)
           return PushResult.DROPPED
         } else {
           throw new Error('Unknown WhatToDoOnBlockedOutput: ' + this._whatToDoOnBlockedOutput)
