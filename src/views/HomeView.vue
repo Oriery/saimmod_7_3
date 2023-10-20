@@ -10,7 +10,7 @@
         :node="node"
       />
     </div>
-    <UniqueStates
+    <SystemAnalytics
       v-if="sysMasSer"
       :analyzer="sysMasSerAnalyzer"
     />
@@ -28,7 +28,7 @@ import {
 } from '../types/systemsOfMassService'
 import NodeBase from '../components/NodeBase.vue'
 import { SystemOfMassServiceAnalyzer } from '@/types/systemOfMassServiceAnalyzer'
-import UniqueStates from '@/components/UniqueStates.vue';
+import SystemAnalytics from '@/components/SystemAnalytics.vue'
 
 let interval: number | null = null
 

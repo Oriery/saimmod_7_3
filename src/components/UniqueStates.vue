@@ -16,9 +16,6 @@
         <p>{{ (quantity / analyzer.statesQuantity.value).toFixed(3).replace(/\.?0+$/gm, '') }}</p>
       </div>
     </div>
-    <div class="flex flex-row justify-end">
-      <v-btn @click="analyzer.reset()">Reset Analytics</v-btn>
-    </div>
   </div>
 </template>
 
