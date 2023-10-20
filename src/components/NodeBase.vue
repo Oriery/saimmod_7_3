@@ -19,8 +19,9 @@
       </div>
     </div>
     <div
-      class="flex gap-2 flex-col border-t-2 border-slate-700 pt-2 min-h-[10rem]"
+      class="border-t-2 border-slate-700 pt-2 min-h-[10rem]"
       ref="parentForTickets"
+      :class="node.nodeType === NodeType.QUEUE ? ' flex gap-2 flex-col' : ' children-are-absolute relative'"
     ></div>
   </div>
 </template>
@@ -75,6 +76,7 @@ if (node.nodeType === NodeType.GENERATOR) {
 
     ticket.onTicketDestroyed(async (ticketDestoyReason: TicketDestoyReason) => {
       container.className += ' p-1 -m-1'
+      container.style.transform = 'translateY(162%)'
 
       if (ticketDestoyReason === TicketDestoyReason.SUCCESSFULLY_PROCESSED) {
         container.className += ' bg-green-800'
@@ -84,7 +86,8 @@ if (node.nodeType === NodeType.GENERATOR) {
 
       await new Promise((resolve) => setTimeout(resolve, 600))
 
-      container.className += ' max-h-0 opacity-0 overflow-hidden -mb-1 p-0 bg-none'
+      container.className += ' opacity-0 overflow-hidden p-0 bg-none'
+      container.style.transform = 'translateY(262%)'
 
       await new Promise((resolve) => setTimeout(resolve, 300))
 
@@ -99,3 +102,13 @@ const NODE_TYPE_TO_BG_COLOR = {
   [NodeType.PROCESSOR]: 'bg-pink-950',
 }
 </script>
+
+<style>
+
+.children-are-absolute > * {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+</style>
