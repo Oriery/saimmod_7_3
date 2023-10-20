@@ -35,6 +35,7 @@ console.log(
 sysMasSer = new SystemOfMassService()
 
 const generator = new Generator(sysMasSer, 0.2, WhatToDoOnBlockedOutput.WAIT)
+const generator2 = new Generator(sysMasSer, 0.8, WhatToDoOnBlockedOutput.DROP)
 const processor = new Processor(sysMasSer, 0.6, WhatToDoOnBlockedOutput.DROP)
 const processor4 = new Processor(sysMasSer, 0.6, WhatToDoOnBlockedOutput.DROP)
 const queue = new Queue(sysMasSer, 3)
@@ -43,6 +44,8 @@ const processor3 = new Processor(sysMasSer, 0.8)
 
 generator.addOutwardNode(processor)
 generator.addOutwardNode(processor4)
+generator2.addOutwardNode(processor)
+generator2.addOutwardNode(processor4)
 processor.addOutwardNode(queue)
 processor4.addOutwardNode(queue)
 queue.addOutwardNode(processor2)

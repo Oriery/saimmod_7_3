@@ -280,9 +280,7 @@ export class Generator extends BaseNode {
   tick() {
     super.tick()
 
-    // TODO: should generate but drop if _whatToDoOnBlockedOutput === WhatToDoOnBlockedOutput.DROP
-    if (this.hasBlockedOutput.value) {
-      console.log(`Gen ${this.id} Blocked output`)
+    if (this.hasBlockedOutput.value && this._whatToDoOnBlockedOutput === WhatToDoOnBlockedOutput.WAIT) {
       return
     }
 
@@ -294,8 +292,8 @@ export class Generator extends BaseNode {
       this.onTicketCreated.forEach((cb) => cb(newTicket))
 
       const res = this.tryPushTicketOutward()
-      if (res !== PushResult.PUSHED) {
-        throw new Error('Ticket was not pushed')
+      if (res !== PushResult.PUSHED && res !== PushResult.DROPPED) {
+        throw new Error('Unexpected result of tryPushTicketOutward: ' + res)
       }
     }
   }
