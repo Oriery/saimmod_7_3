@@ -73,9 +73,11 @@ export default async function changeParentSmoothly(
 
       const tempStyleTransform = child.value.style.transform
       const tempStyleTransition = child.value.style.transition
+      const tempStyleZIndex = child.value.style.zIndex
 
       child.value.style.transition = `transform ${transitionTime}ms ease-in-out`
       child.value.style.transform += ' ' + `translate(${dx}px, ${dy}px)`
+      child.value.style.zIndex = '1000'
 
       await new Promise((resolve) => {
         animForHtmlEl.forceFinish = async () => {
@@ -83,6 +85,7 @@ export default async function changeParentSmoothly(
 
           animForHtmlEl.element.style.transform = tempStyleTransform
           animForHtmlEl.element.style.transition = tempStyleTransition
+          animForHtmlEl.element.style.zIndex = tempStyleZIndex
 
           await new Promise((resolve) => setTimeout(resolve, 50))
 
@@ -92,7 +95,7 @@ export default async function changeParentSmoothly(
         // add handler to wait for transition to end
         child.value.addEventListener(
           'transitionend',
-          async (e) => {
+          async () => {
             if (currentlyProcessedHtmlElements.get(child.value) !== animForHtmlEl) {
               //console.log('new transition has started')
               resolve(null)
@@ -106,6 +109,7 @@ export default async function changeParentSmoothly(
 
             child.value.style.transform = tempStyleTransform
             child.value.style.transition = tempStyleTransition
+            child.value.style.zIndex = tempStyleZIndex
 
             await new Promise((resolve) => setTimeout(resolve, 50))
             tempChild.value.style.minWidth = '0'
