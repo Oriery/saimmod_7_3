@@ -10,14 +10,13 @@
     >
       <div class="grid grid-cols-3">
         <div></div>
-        <div>
-          Outward nodes:
-        </div>
+        <div>Outward nodes:</div>
         <Transition>
-          <div v-if="node.hasBlockedOutput.value" class="flex flex-row-reverse">
-            <div class="text-grey-300 bg-red-900 rounded px-2 font-bold">
-              Blocked
-            </div>
+          <div
+            v-if="node.hasBlockedOutput.value"
+            class="flex flex-row-reverse"
+          >
+            <div class="text-grey-300 font-bold">Blocked</div>
           </div>
         </Transition>
       </div>
@@ -32,10 +31,28 @@
     </div>
     <p v-if="node.nodeType === NodeType.QUEUE">Capacity: {{ node.capacity }}</p>
     <div
-      class="border-t-2 border-slate-700 pt-2 min-h-[10rem]"
+      class="border-t-2 border-slate-700 pt-2 min-h-[10rem] flex-grow"
       ref="parentForTickets"
-      :class="node.nodeType === NodeType.QUEUE ? ' flex gap-2 flex-col' : ' children-are-absolute relative'"
-    ></div>
+      :class="
+        node.nodeType === NodeType.QUEUE
+          ? ' flex gap-2 flex-col'
+          : ' children-are-absolute relative'
+      "
+    >
+      <Transition>
+        <div
+          v-if="
+            node.nodeType === NodeType.PROCESSOR &&
+            (node as Processor).couldNotPushTicketOutwardOnPrevTick.value
+          "
+          class="absolute bottom-0 left-0 right-0 flex justify-center"
+        >
+          <p class="font-bold text-grey-300 bg-red-900 rounded py-2 px-4">
+            Ready but blocked output
+          </p>
+        </div>
+      </Transition>
+    </div>
   </div>
 </template>
 
@@ -47,6 +64,7 @@ import {
   Ticket,
   Generator,
   TicketDestoyReason,
+  Processor,
 } from '@/types/systemsOfMassService'
 import TicketComponent from './TicketComponent.vue'
 import { ref, h, render, onMounted, watch } from 'vue'
@@ -117,13 +135,11 @@ const NODE_TYPE_TO_BG_COLOR = {
 </script>
 
 <style>
-
 .children-are-absolute > * {
   position: absolute;
   left: 0;
   right: 0;
 }
-
 </style>
 
 <style scoped>

@@ -336,6 +336,7 @@ export class Processor extends BaseNode {
   capacity: number
   protected _whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput
   private _willProcessTicketOnCurrentTick: boolean
+  couldNotPushTicketOutwardOnPrevTick: Ref<boolean>
   private _didTryProcessTicketOnCurrentTickAlready: boolean
 
   private _nodeType: NodeType = NodeType.PROCESSOR
@@ -354,6 +355,7 @@ export class Processor extends BaseNode {
     this._whatToDoOnBlockedOutput = whatToDoOnBlockedOutput
     this._willProcessTicketOnCurrentTick = false
     this._didTryProcessTicketOnCurrentTickAlready = false
+    this.couldNotPushTicketOutwardOnPrevTick = ref(false)
   }
 
   canReceiveTicket() {
@@ -362,7 +364,7 @@ export class Processor extends BaseNode {
   }
 
   beforeTick() {
-    this._willProcessTicketOnCurrentTick = Math.random() > this.probabilityOfNotProcessingTicket
+    this._willProcessTicketOnCurrentTick = this.couldNotPushTicketOutwardOnPrevTick.value || Math.random() > this.probabilityOfNotProcessingTicket
     this._didTryProcessTicketOnCurrentTickAlready = false
   }
 
@@ -391,8 +393,10 @@ export class Processor extends BaseNode {
       } else {
         // If there are outward nodes, try to push ticket outward
         const res = this.tryPushTicketOutward()
-        if (res === PushResult.DROPPED) {
-          console.log(`Proc ${this.id} dropped out ticket`)
+        if (res === PushResult.BLOCKED) {
+          this.couldNotPushTicketOutwardOnPrevTick.value = true
+        } else if (res === PushResult.PUSHED) {
+          this.couldNotPushTicketOutwardOnPrevTick.value = false
         }
       }
     }
