@@ -26,6 +26,7 @@
         </p>
       </div>
     </div>
+    <p v-if="node.nodeType === NodeType.QUEUE">Capacity: {{ node.capacity }}</p>
     <div
       class="border-t-2 border-slate-700 pt-2 min-h-[10rem]"
       ref="parentForTickets"
