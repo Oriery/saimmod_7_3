@@ -36,7 +36,7 @@ sysMasSer = new SystemOfMassService()
 
 const generator = new Generator(sysMasSer, 0.2, WhatToDoOnBlockedOutput.WAIT)
 const generator2 = new Generator(sysMasSer, 0.8, WhatToDoOnBlockedOutput.DROP)
-const processor = new Processor(sysMasSer, 0.6, WhatToDoOnBlockedOutput.DROP)
+const processor = new Processor(sysMasSer, 0.6, WhatToDoOnBlockedOutput.WAIT)
 const processor4 = new Processor(sysMasSer, 0.6, WhatToDoOnBlockedOutput.DROP)
 const queue = new Queue(sysMasSer, 3)
 const processor2 = new Processor(sysMasSer, 0.8)

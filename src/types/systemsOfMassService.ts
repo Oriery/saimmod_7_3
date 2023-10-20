@@ -238,7 +238,6 @@ export abstract class BaseNode implements Tickable, VisualContainer {
   tick(): void {
     this.hasBlockedOutput.value =
       this.outwardNodes.length > 0 &&
-      this.ticketsInside.value.length === this.capacity &&
       this.findOutwardNodeReadyToReceiveTicket() === null
   }
 }

@@ -13,9 +13,13 @@
         <div>
           Outward nodes:
         </div>
-        <div v-if="node.hasBlockedOutput.value" class="text-red-500 text-end">
-          Blocked
-        </div>
+        <Transition>
+          <div v-if="node.hasBlockedOutput.value" class="flex flex-row-reverse">
+            <div class="text-grey-300 bg-red-900 rounded px-2 font-bold">
+              Blocked
+            </div>
+          </div>
+        </Transition>
       </div>
       <div class="flex flex-col align-end">
         <p
@@ -120,4 +124,16 @@ const NODE_TYPE_TO_BG_COLOR = {
   right: 0;
 }
 
+</style>
+
+<style scoped>
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+}
 </style>
