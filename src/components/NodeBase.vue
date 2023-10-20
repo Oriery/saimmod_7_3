@@ -32,6 +32,7 @@ import {
   NodeType,
   Ticket,
   Generator,
+  TicketDestoyReason,
 } from '@/types/systemsOfMassService'
 import TicketComponent from './TicketComponent.vue'
 import { ref, h, render, onMounted, watch } from 'vue'
@@ -58,6 +59,9 @@ if (node.nodeType === NodeType.GENERATOR) {
     const container = document.createElement('div')
     parentForTickets.value.appendChild(container)
 
+    container.className = 'rounded'
+    container.style.transition = 'all 300ms ease-in-out'
+
     const vnode = h(TicketComponent, { ticket })
     render(vnode, container)
 
@@ -69,7 +73,21 @@ if (node.nodeType === NodeType.GENERATOR) {
       await changeParentSmoothly(ref(container), ref(newContainerNode.refToContainer), 300)
     })
 
-    ticket.onTicketDestroyed.push(() => {
+    ticket.onTicketDestroyed(async (ticketDestoyReason: TicketDestoyReason) => {
+      container.className += ' p-1 -m-1'
+
+      if (ticketDestoyReason === TicketDestoyReason.SUCCESSFULLY_PROCESSED) {
+        container.className += ' bg-green-800'
+      } else if (ticketDestoyReason === TicketDestoyReason.DROPPED) {
+        container.className += ' bg-red-800'
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 600))
+
+      container.className += ' max-h-0 opacity-0 overflow-hidden -mb-1 p-0 bg-none'
+
+      await new Promise((resolve) => setTimeout(resolve, 300))
+
       container.remove()
     })
   })

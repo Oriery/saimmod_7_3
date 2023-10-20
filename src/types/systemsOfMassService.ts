@@ -63,7 +63,7 @@ export class SystemOfMassService {
     this._tickables.push(ticket)
   }
 
-  removeTicket(ticket: Ticket) {
+  removeTicket(ticket: Ticket, reason: TicketDestoyReason) {
     const index = this._tickables.findIndex((tickable) => tickable.id === ticket.id)
     if (index > -1) {
       this._tickables.splice(index, 1)
@@ -71,7 +71,7 @@ export class SystemOfMassService {
       throw new Error('Ticket not found')
     }
 
-    ticket.onTicketDestroyed.forEach((cb) => cb())
+    ticket.destroy(reason)
   }
 
   addNode(node: BaseNode) {
@@ -98,6 +98,11 @@ export class SystemOfMassService {
   }
 }
 
+export enum TicketDestoyReason {
+  SUCCESSFULLY_PROCESSED,
+  DROPPED,
+}
+
 export class Ticket implements Tickable {
   private _id: string
   public get id(): string {
@@ -112,7 +117,7 @@ export class Ticket implements Tickable {
     this._containerNode.value = value
     this.onContainerNodeChanged.forEach((cb) => cb(value))
   }
-  onTicketDestroyed: (() => void)[] = []
+  private _onTicketDestroyed: ((reason: TicketDestoyReason) => void)[] = []
   onContainerNodeChanged: ((newContainerNode: BaseNode | null) => void)[] = []
 
   constructor() {
@@ -123,6 +128,14 @@ export class Ticket implements Tickable {
 
   tick() {
     this.ticksAlive.value++
+  }
+
+  destroy(reason: TicketDestoyReason) {
+    this._onTicketDestroyed.forEach((cb) => cb(reason))
+  }
+
+  onTicketDestroyed(cb: (reason: TicketDestoyReason) => void) {
+    this._onTicketDestroyed.push(cb)
   }
 }
 
@@ -177,7 +190,7 @@ export abstract class BaseNode implements Tickable, VisualContainer {
           if (ticketFromInside !== ticket) {
             throw new Error('Ticket was not the same as the one that was found')
           }
-          this._sysMassService.removeTicket(ticket)
+          this._sysMassService.removeTicket(ticket, TicketDestoyReason.DROPPED)
           return PushResult.DROPPED
         } else {
           throw new Error('Unknown WhatToDoOnBlockedOutput: ' + this._whatToDoOnBlockedOutput)
@@ -368,7 +381,7 @@ export class Processor extends BaseNode {
       if (this.outwardNodes.length === 0) {
         const ticket = this.ticketsInside.value.shift()
         if (ticket) {
-          this._sysMassService.removeTicket(ticket)
+          this._sysMassService.removeTicket(ticket, TicketDestoyReason.SUCCESSFULLY_PROCESSED)
         } else {
           throw new Error('No ticket to remove')
         }
