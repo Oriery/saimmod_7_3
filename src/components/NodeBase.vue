@@ -67,7 +67,7 @@ import {
   Processor,
 } from '@/types/systemsOfMassService'
 import TicketComponent from './TicketComponent.vue'
-import { ref, h, render, onMounted, watch } from 'vue'
+import { ref, h, render, onMounted } from 'vue'
 import changeParentSmoothly from '@/utils/changeParentSmoothly'
 
 const parentForTickets = ref<HTMLElement | null>(null)

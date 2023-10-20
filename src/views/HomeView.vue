@@ -23,6 +23,7 @@ import {
   Queue,
 } from '../types/systemsOfMassService'
 import NodeBase from '../components/NodeBase.vue'
+import { SystemOfMassServiceAnalyzer } from '@/types/systemOfMassServiceAnalyzer'
 
 let interval: number | null = null
 
@@ -51,9 +52,14 @@ processor4.addOutwardNode(queue)
 queue.addOutwardNode(processor2)
 queue.addOutwardNode(processor3)
 
+const sysMasSerAnalyzer = new SystemOfMassServiceAnalyzer(sysMasSer)
+sysMasSerAnalyzer.reset()
+sysMasSerAnalyzer.recordState()
+
 interval = setInterval(() => {
   if (sysMasSer) {
     sysMasSer.doFullTick()
+    sysMasSerAnalyzer.recordState()
   }
 }, 1000)
 
