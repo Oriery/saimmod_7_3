@@ -1,5 +1,5 @@
 <template>
-  <main>
+  <main class="flex flex-col gap-4">
     <div
       v-if="sysMasSer"
       class="grid gap-2 grid-cols-3"
@@ -10,6 +10,10 @@
         :node="node"
       />
     </div>
+    <UniqueStates
+      v-if="sysMasSer"
+      :analyzer="sysMasSerAnalyzer"
+    />
   </main>
 </template>
 
@@ -24,6 +28,7 @@ import {
 } from '../types/systemsOfMassService'
 import NodeBase from '../components/NodeBase.vue'
 import { SystemOfMassServiceAnalyzer } from '@/types/systemOfMassServiceAnalyzer'
+import UniqueStates from '@/components/UniqueStates.vue';
 
 let interval: number | null = null
 
@@ -39,7 +44,7 @@ const generator = new Generator(sysMasSer, 0.2, WhatToDoOnBlockedOutput.WAIT)
 const generator2 = new Generator(sysMasSer, 0.8, WhatToDoOnBlockedOutput.DROP)
 const processor = new Processor(sysMasSer, 0.6, WhatToDoOnBlockedOutput.WAIT)
 const processor4 = new Processor(sysMasSer, 0.6, WhatToDoOnBlockedOutput.DROP)
-const queue = new Queue(sysMasSer, 3)
+const queue = new Queue(sysMasSer, 2)
 const processor2 = new Processor(sysMasSer, 0.8)
 const processor3 = new Processor(sysMasSer, 0.8)
 

@@ -13,8 +13,9 @@ export class SystemOfMassServiceAnalyzer {
   get sysMasSer(): SystemOfMassService {
     return this._sysMasSer
   }
-  states: Ref<string[]> = ref([])
   statesAbsoluteProbabilities: Ref<Map<string, number>> = ref(new Map())
+  statesQuantity: Ref<number> = ref(0)
+  lastState: Ref<string> = ref('')
 
   constructor(sysMasSer: SystemOfMassService) {
     this._sysMasSer = sysMasSer
@@ -29,18 +30,19 @@ export class SystemOfMassServiceAnalyzer {
   }
 
   reset() {
-    this.states.value = []
     this.statesAbsoluteProbabilities.value = new Map()
+    this.statesQuantity.value = 0
+    this.lastState.value = ''
   }
 
   recordState(): string {
     const state = this._getSystemState()
-    this.states.value.push(state)
     this.statesAbsoluteProbabilities.value.set(
       state,
       (this.statesAbsoluteProbabilities.value.get(state) ?? 0) + 1,
     )
-    console.log(state, this.statesAbsoluteProbabilities.value.get(state))
+    this.statesQuantity.value++
+    this.lastState.value = state
     return state
   }
 }
