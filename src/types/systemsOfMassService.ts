@@ -29,8 +29,6 @@ export enum NodeType {
   PROCESSOR,
 }
 
-// TODO: add classes SINK and GARBAGE for processed and dropped tickets
-
 export const NODE_TYPE_TO_NAME = {
   [NodeType.GENERATOR]: 'Generator',
   [NodeType.QUEUE]: 'Queue',
@@ -158,6 +156,7 @@ export abstract class BaseNode implements Tickable, VisualContainer {
   protected abstract canReceiveTicket(): boolean
   protected _sysMassService: SystemOfMassService
   refToContainer: Ref<HTMLElement | null> = ref(null)
+  hasBlockedOutput: Ref<boolean> = ref(false)
 
   constructor(sysMassService: SystemOfMassService) {
     this._id = Math.random().toString(36).slice(2)
@@ -236,14 +235,18 @@ export abstract class BaseNode implements Tickable, VisualContainer {
     this.outwardNodes.push(node)
   }
 
-  abstract tick(): void
+  tick(): void {
+    this.hasBlockedOutput.value =
+      this.outwardNodes.length > 0 &&
+      this.ticketsInside.value.length === this.capacity &&
+      this.findOutwardNodeReadyToReceiveTicket() === null
+  }
 }
 
 export class Generator extends BaseNode {
   probabilityOfNotGeneratingTicket: number
   capacity: number
   protected _whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput
-  isNotGeneratingBecauseOfBlockedOutput: boolean
   private _willGenerateTicketOnCurrentTick: boolean
 
   private _nodeType: NodeType = NodeType.GENERATOR
@@ -262,7 +265,6 @@ export class Generator extends BaseNode {
     this.probabilityOfNotGeneratingTicket = probabilityOfNotGeneratingTicket
     this.capacity = 0
     this._whatToDoOnBlockedOutput = whatToDoOnBlockedOutput
-    this.isNotGeneratingBecauseOfBlockedOutput = false
     this._willGenerateTicketOnCurrentTick = false
   }
 
@@ -276,10 +278,10 @@ export class Generator extends BaseNode {
   }
 
   tick() {
-    this.isNotGeneratingBecauseOfBlockedOutput = this.findOutwardNodeReadyToReceiveTicket() === null
+    super.tick()
 
     // TODO: should generate but drop if _whatToDoOnBlockedOutput === WhatToDoOnBlockedOutput.DROP
-    if (this.isNotGeneratingBecauseOfBlockedOutput) {
+    if (this.hasBlockedOutput.value) {
       console.log(`Gen ${this.id} Blocked output`)
       return
     }
@@ -320,6 +322,8 @@ export class Queue extends BaseNode {
   }
 
   tick() {
+    super.tick()
+
     while (this.tryPushTicketOutward() === PushResult.PUSHED) {
       // do nothing
     }
@@ -366,6 +370,8 @@ export class Processor extends BaseNode {
   }
 
   tick() {
+    super.tick()
+
     this.tryProcessTicket()
   }
 

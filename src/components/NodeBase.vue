@@ -8,7 +8,15 @@
       v-if="node.outwardNodes.length"
       class=""
     >
-      Outward nodes:
+      <div class="grid grid-cols-3">
+        <div></div>
+        <div>
+          Outward nodes:
+        </div>
+        <div v-if="node.hasBlockedOutput.value" class="text-red-500 text-end">
+          Blocked
+        </div>
+      </div>
       <div class="flex flex-col align-end">
         <p
           v-for="n in node.outwardNodes"
