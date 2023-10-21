@@ -13,7 +13,7 @@
     <div class="flex flex-row gap-4">
       <v-btn
         @click="isRunning = !isRunning"
-        :color="isRunning ? 'green-darken-4' : 'red-darken-4'"
+        :color="isRunning ? 'red-darken-4' : 'green-darken-4'"
       >
         {{ (isRunning ? 'Pause' : 'Unpause') + ' (SPACE)' }}
       </v-btn>
