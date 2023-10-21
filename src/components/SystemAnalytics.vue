@@ -66,6 +66,12 @@ const tableOfData = computed(() => {
         props.analyzer.ticketAnalyzer.ticketsProcessed.value /
         props.analyzer.ticketAnalyzer.totalTicketsLeftSystem.value,
     },
+    {
+      text: 'Absolute throughput rate',
+      val:
+        props.analyzer.ticketAnalyzer.ticketsProcessed.value /
+        props.analyzer.statesQuantity.value,
+    }
   ]
 })
 </script>
