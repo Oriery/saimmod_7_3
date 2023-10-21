@@ -1,8 +1,30 @@
 <template>
   <main class="flex flex-col gap-4">
+    <div class="flex flex-row gap-4">
+      <p class="text-center pt-1">TPS: {{ ticksPerSecond }}</p>
+      <v-slider
+        step="1"
+        show-ticks
+        v-model="ticksPerSecondExponent"
+        :min="0"
+        :max="8"
+      ></v-slider>
+    </div>
+    <div class="flex flex-row gap-4">
+      <v-btn
+        @click="isRunning = !isRunning"
+        :color="isRunning ? 'green-darken-4' : 'red-darken-4'"
+      >
+        {{ (isRunning ? 'Pause' : 'Unpause') + ' (SPACE)' }}
+      </v-btn>
+    </div>
+    <SystemAnalytics
+      v-if="sysMasSer"
+      :analyzer="sysMasSerAnalyzer"
+    />
     <div
       v-if="sysMasSer"
-      class="grid gap-2 grid-cols-3"
+      class="grid gap-2 grid-cols-2 md:grid-cols-3"
     >
       <NodeBase
         v-for="node in sysMasSer.nodes"
@@ -10,15 +32,11 @@
         :node="node"
       />
     </div>
-    <SystemAnalytics
-      v-if="sysMasSer"
-      :analyzer="sysMasSerAnalyzer"
-    />
   </main>
 </template>
 
 <script setup lang="ts">
-import { onUnmounted } from 'vue'
+import { onUnmounted, ref, watch, computed } from 'vue'
 import {
   Generator,
   Processor,
@@ -31,12 +49,13 @@ import { SystemOfMassServiceAnalyzer } from '@/types/systemOfMassServiceAnalyzer
 import SystemAnalytics from '@/components/SystemAnalytics.vue'
 
 let interval: number | null = null
+const ticksPerSecondExponent = ref(0)
+const ticksPerSecond = computed(() => {
+  return 2 ** ticksPerSecondExponent.value
+})
+const isRunning = ref(true)
 
 let sysMasSer: SystemOfMassService | null = null
-
-console.log(
-  '#############################################################################################',
-)
 
 sysMasSer = new SystemOfMassService()
 
@@ -61,16 +80,45 @@ const sysMasSerAnalyzer = new SystemOfMassServiceAnalyzer(sysMasSer)
 sysMasSerAnalyzer.reset()
 sysMasSerAnalyzer.recordState()
 
-interval = setInterval(() => {
-  if (sysMasSer) {
-    sysMasSer.doFullTick()
-    sysMasSerAnalyzer.recordState()
-  }
-}, 1000)
+interval = setInterval(oneTickHandler, 1000 / ticksPerSecond.value)
 
 onUnmounted(() => {
   if (interval) {
     clearInterval(interval)
   }
 })
+
+watch(isRunning, (newVal) => {
+  if (newVal) {
+    interval = setInterval(oneTickHandler, 1000 / ticksPerSecond.value)
+  } else {
+    if (interval) {
+      clearInterval(interval)
+    }
+  }
+})
+
+watch(ticksPerSecond, (newVal) => {
+  if (isRunning.value) {
+    if (interval) {
+      clearInterval(interval)
+    }
+    interval = setInterval(oneTickHandler, 1000 / newVal)
+  }
+})
+
+// when SPACE is pressed - pause/unpause
+window.addEventListener('keydown', (e) => {
+  e.preventDefault()
+  if (e.code === 'Space') {
+    isRunning.value = !isRunning.value
+  }
+})
+
+function oneTickHandler(): void {
+  if (sysMasSer) {
+    sysMasSer.doFullTick()
+    sysMasSerAnalyzer.recordState()
+  }
+}
 </script>

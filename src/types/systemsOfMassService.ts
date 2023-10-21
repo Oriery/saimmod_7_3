@@ -87,7 +87,6 @@ export class SystemOfMassService {
   }
 
   doFullTick() {
-    console.log(`TICK ${this._tick}`)
     // do beforeTick
     for (const tickable of this._tickables) {
       if (tickable.beforeTick) {
