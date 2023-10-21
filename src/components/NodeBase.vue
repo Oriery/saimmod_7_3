@@ -1,15 +1,25 @@
 <template>
   <div
-    class="rounded flex flex-col gap-2 p-2"
+    class="rounded flex flex-col gap-1 p-2"
     :class="NODE_TYPE_TO_BG_COLOR[node.nodeType]"
   >
     <p>{{ NODE_TYPE_TO_NAME[node.nodeType] }} {{ node.id }}</p>
-    <p v-if="node.nodeType !== NodeType.QUEUE && node.outwardNodes.length > 0">{{ WhatToDoOnBlockedOutput[node.whatToDoOnBlockedOutput] }}</p>
-    <div
-      v-if="node.outwardNodes.length"
-      class=""
-    >
-      <div>Blocked time: {{ shortenNumber(node.blockedTimeRatio.value) }}</div>
+    <p v-if="node.nodeType === NodeType.PROCESSOR && node.outwardNodes.length > 0">
+      On blocked: {{ WhatToDoOnBlockedOutput[node.whatToDoOnBlockedOutput] }}
+    </p>
+    <p v-if="node.nodeType === NodeType.GENERATOR && node.outwardNodes.length > 0">
+      On blocked: {{ ["Do not generate", "Generate but drop"][node.whatToDoOnBlockedOutput] }}
+    </p>
+    <p v-if="node.nodeType === NodeType.GENERATOR">
+      Probability of not generating: {{ (node as Generator).probabilityOfNotGeneratingTicket }}
+    </p>
+    <p v-if="node.nodeType === NodeType.PROCESSOR">
+      Probability of not processing: {{ (node as Processor).probabilityOfNotProcessingTicket }}
+    </p>
+    <p v-if="node.outwardNodes.length">
+      Blocked time: {{ shortenNumber(node.blockedTimeRatio.value) }}
+    </p>
+    <div v-if="node.outwardNodes.length">
       <div class="grid grid-cols-3">
         <div></div>
         <div>Outward nodes:</div>
