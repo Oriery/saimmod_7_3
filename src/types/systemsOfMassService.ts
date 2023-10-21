@@ -1,5 +1,5 @@
 import type { Ref } from 'vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { VisualContainer } from './visualized'
 
 interface WithId {
@@ -99,12 +99,16 @@ export class SystemOfMassService {
       tickable.tick?.()
     }
 
+    this._tick++
+
     // do afterTick
     for (const tickable of this._tickables) {
       tickable.afterTick?.()
     }
+  }
 
-    this._tick++
+  reset() {
+    this._tick = 0
   }
 }
 
@@ -173,6 +177,8 @@ export abstract class BaseNode implements Tickable, VisualContainer {
   protected _sysMassService: SystemOfMassService
   refToContainer: Ref<HTMLElement | null> = ref(null)
   hasBlockedOutput: Ref<boolean> = ref(false)
+  private _blockedTicksQuantity = ref(0)
+  public blockedTimeRatio = ref(0)
 
   constructor(sysMassService: SystemOfMassService) {
     this._id = Math.random().toString(36).slice(2)
@@ -254,6 +260,17 @@ export abstract class BaseNode implements Tickable, VisualContainer {
   tick(): void {
     this.hasBlockedOutput.value =
       this.outwardNodes.length > 0 && this.findOutwardNodeReadyToReceiveTicket() === null
+    if (this.hasBlockedOutput.value) {
+      this._blockedTicksQuantity.value++
+    }
+  }
+
+  afterTick(): void {
+    this.blockedTimeRatio.value = this._blockedTicksQuantity.value / this._sysMassService.tick
+  }
+
+  resetStats() {
+    this._blockedTicksQuantity.value = 0
   }
 }
 

@@ -80,6 +80,11 @@ export class SystemOfMassServiceAnalyzer {
       sumOfTicketsNowInSystem: ref(0),
     }
     this.sumLengthOfQueues.value = 0
+
+    this._sysMasSer.nodes.forEach(node => {
+      node.resetStats()
+    })
+    this._sysMasSer.reset()
   }
 
   recordState(): string {

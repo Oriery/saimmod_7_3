@@ -8,6 +8,7 @@
       v-if="node.outwardNodes.length"
       class=""
     >
+      <div>Blocked time: {{ shortenNumber(node.blockedTimeRatio.value) }}</div>
       <div class="grid grid-cols-3">
         <div></div>
         <div>Outward nodes:</div>
@@ -69,6 +70,7 @@ import {
 import TicketComponent from './TicketComponent.vue'
 import { ref, h, render, onMounted } from 'vue'
 import changeParentSmoothly from '@/utils/changeParentSmoothly'
+import shortenNumber from '@/utils/shortenNumber'
 
 const parentForTickets = ref<HTMLElement | null>(null)
 

@@ -24,7 +24,7 @@
     />
     <div
       v-if="sysMasSer"
-      class="grid gap-2 grid-cols-2 md:grid-cols-3"
+      class="grid gap-2 grid-cols-2 lg:grid-cols-3"
     >
       <NodeBase
         v-for="node in sysMasSer.nodes"
