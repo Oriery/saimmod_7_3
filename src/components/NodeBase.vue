@@ -97,11 +97,7 @@ if (node.nodeType === NodeType.GENERATOR) {
     const vnode = h(TicketComponent, { ticket })
     render(vnode, container)
 
-    ticket.onContainerNodeChanged.push(async (newContainerNode: BaseNode | null): Promise<void> => {
-      if (!newContainerNode) {
-        throw new Error('newContainerNode is null')
-      }
-
+    ticket.onContainerNodeChanged.push(async (newContainerNode: BaseNode): Promise<void> => {
       await changeParentSmoothly(ref(container), ref(newContainerNode.refToContainer), 300)
     })
 

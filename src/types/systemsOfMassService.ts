@@ -7,8 +7,9 @@ interface WithId {
 }
 
 interface Tickable extends WithId {
-  tick(): void
+  tick?(): void
   beforeTick?(): void
+  afterTick?(): void
 }
 
 enum PushResult {
@@ -51,6 +52,11 @@ export class SystemOfMassService {
     return this._tick
   }
 
+  private _onTicketLeftSystem: ((ticket: Ticket, reason: TicketDestoyReason) => void)[] = []
+  onTicketLeftSystem(cb: (ticket: Ticket, reason: TicketDestoyReason) => void) {
+    this._onTicketLeftSystem.push(cb)
+  }
+
   constructor() {
     this._nodes = []
     this._tickables = []
@@ -70,6 +76,8 @@ export class SystemOfMassService {
     }
 
     ticket.destroy(reason)
+
+    this._onTicketLeftSystem.forEach((cb) => cb(ticket, reason))
   }
 
   addNode(node: BaseNode) {
@@ -89,7 +97,12 @@ export class SystemOfMassService {
 
     // do tick
     for (const tickable of this._tickables) {
-      tickable.tick()
+      tickable.tick?.()
+    }
+
+    // do afterTick
+    for (const tickable of this._tickables) {
+      tickable.afterTick?.()
     }
 
     this._tick++
@@ -107,25 +120,29 @@ export class Ticket implements Tickable {
     return this._id
   }
   ticksAlive: Ref<number>
-  private _containerNode: Ref<BaseNode | null>
-  public get containerNode(): BaseNode | null {
-    return this._containerNode.value
+  ticksWaitingInQueue: Ref<number> = ref(0)
+  private _containerNode: BaseNode
+  public get containerNode(): BaseNode {
+    return this._containerNode
   }
-  public set containerNode(value: BaseNode | null) {
-    this._containerNode.value = value
+  public set containerNode(value: BaseNode) {
+    this._containerNode = value
     this.onContainerNodeChanged.forEach((cb) => cb(value))
   }
   private _onTicketDestroyed: ((reason: TicketDestoyReason) => void)[] = []
-  onContainerNodeChanged: ((newContainerNode: BaseNode | null) => void)[] = []
+  onContainerNodeChanged: ((newContainerNode: BaseNode) => void)[] = []
 
-  constructor() {
+  constructor(containerNode: BaseNode) {
     this._id = Math.random().toString(36).slice(2)
     this.ticksAlive = ref(0)
-    this._containerNode = ref(null)
+    this._containerNode = containerNode
   }
 
-  tick() {
+  afterTick(): void {
     this.ticksAlive.value++
+    if (this._containerNode && this._containerNode.nodeType === NodeType.QUEUE) {
+      this.ticksWaitingInQueue.value++
+    }
   }
 
   destroy(reason: TicketDestoyReason) {
@@ -237,8 +254,7 @@ export abstract class BaseNode implements Tickable, VisualContainer {
 
   tick(): void {
     this.hasBlockedOutput.value =
-      this.outwardNodes.length > 0 &&
-      this.findOutwardNodeReadyToReceiveTicket() === null
+      this.outwardNodes.length > 0 && this.findOutwardNodeReadyToReceiveTicket() === null
   }
 }
 
@@ -279,15 +295,17 @@ export class Generator extends BaseNode {
   tick() {
     super.tick()
 
-    if (this.hasBlockedOutput.value && this._whatToDoOnBlockedOutput === WhatToDoOnBlockedOutput.WAIT) {
+    if (
+      this.hasBlockedOutput.value &&
+      this._whatToDoOnBlockedOutput === WhatToDoOnBlockedOutput.WAIT
+    ) {
       return
     }
 
     if (this._willGenerateTicketOnCurrentTick) {
-      const newTicket = new Ticket()
+      const newTicket = new Ticket(this)
       this.ticketsInside.value.push(newTicket)
       this._sysMassService.addTicket(newTicket)
-      newTicket.containerNode = this
       this.onTicketCreated.forEach((cb) => cb(newTicket))
 
       const res = this.tryPushTicketOutward()
@@ -364,7 +382,9 @@ export class Processor extends BaseNode {
   }
 
   beforeTick() {
-    this._willProcessTicketOnCurrentTick = this.couldNotPushTicketOutwardOnPrevTick.value || Math.random() > this.probabilityOfNotProcessingTicket
+    this._willProcessTicketOnCurrentTick =
+      this.couldNotPushTicketOutwardOnPrevTick.value ||
+      Math.random() > this.probabilityOfNotProcessingTicket
     this._didTryProcessTicketOnCurrentTickAlready = false
   }
 

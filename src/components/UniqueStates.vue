@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col bg-slate-950 p-4 max-w-[32rem] gap-2">
+  <div class="flex flex-col bg-slate-950 p-4 gap-2">
     <p class="font-bold">Total: {{ analyzer.statesQuantity.value }}</p>
     <div class="grid grid-cols-3 gap-2">
         <p class="font-bold">State</p>
@@ -13,7 +13,7 @@
       <div class="grid grid-cols-3 gap-2" :class="analyzer.lastState.value === state ? 'bg-slate-800' : ''">
         <p>{{ state }}</p>
         <p>{{ quantity }}</p>
-        <p>{{ (quantity / analyzer.statesQuantity.value).toFixed(3).replace(/\.?0+$/gm, '') }}</p>
+        <p>{{ shortenNumber(quantity / analyzer.statesQuantity.value) }}</p>
       </div>
     </div>
   </div>
@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 import { SystemOfMassServiceAnalyzer } from '@/types/systemOfMassServiceAnalyzer'
+import shortenNumber from '@/utils/shortenNumber'
 
 defineProps<{
   analyzer: SystemOfMassServiceAnalyzer
