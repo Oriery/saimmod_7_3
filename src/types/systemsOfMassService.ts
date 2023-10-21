@@ -183,6 +183,10 @@ export abstract class BaseNode implements Tickable, VisualContainer {
   hasBlockedOutput: Ref<boolean> = ref(false)
   private _blockedTicksQuantity = ref(0)
   public blockedTimeRatio = ref(0)
+  private _sumTicketsInside = ref(0)
+  public avgTicketsInside = ref(0)
+  private _quantityOfTimesBeingFull = ref(0)
+  public beingFullRatio = ref(0)
 
   constructor(sysMassService: SystemOfMassService) {
     this._id = Math.random().toString(36).slice(2)
@@ -264,17 +268,29 @@ export abstract class BaseNode implements Tickable, VisualContainer {
   tick(): void {
     this.hasBlockedOutput.value =
       this.outwardNodes.length > 0 && this.findOutwardNodeReadyToReceiveTicket() === null
-    if (this.hasBlockedOutput.value) {
-      this._blockedTicksQuantity.value++
-    }
   }
 
   afterTick(): void {
+    if (this.hasBlockedOutput.value) {
+      this._blockedTicksQuantity.value++
+    }
     this.blockedTimeRatio.value = this._blockedTicksQuantity.value / this._sysMassService.tick
+    this._sumTicketsInside.value += this.ticketsInside.value.length
+    this.avgTicketsInside.value = this._sumTicketsInside.value / this._sysMassService.tick
+    if (this.ticketsInside.value.length === this.capacity) {
+      this._quantityOfTimesBeingFull.value++
+    }
+    this.beingFullRatio.value =
+      this._quantityOfTimesBeingFull.value / this._sysMassService.tick
   }
 
   resetStats() {
     this._blockedTicksQuantity.value = 0
+    this.blockedTimeRatio.value = 0
+    this._sumTicketsInside.value = 0
+    this.avgTicketsInside.value = 0
+    this._quantityOfTimesBeingFull.value = 0
+    this.beingFullRatio.value = 0
   }
 }
 

@@ -19,6 +19,12 @@
     <p v-if="node.outwardNodes.length">
       Blocked time: {{ shortenNumber(node.blockedTimeRatio.value) }}
     </p>
+    <p v-if="node.nodeType !== NodeType.GENERATOR">
+      Avg tickets inside: {{ shortenNumber(node.avgTicketsInside.value) }}
+    </p>
+    <p v-if="node.nodeType === NodeType.QUEUE">
+      Full time: {{ shortenNumber(node.beingFullRatio.value) }}
+    </p>
     <div v-if="node.outwardNodes.length">
       <div class="grid grid-cols-3">
         <div></div>
