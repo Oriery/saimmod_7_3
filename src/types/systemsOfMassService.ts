@@ -170,9 +170,13 @@ export abstract class BaseNode implements Tickable, VisualContainer {
     return this._ticketsInside
   }
 
+  protected abstract _whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput
+  public get whatToDoOnBlockedOutput(): WhatToDoOnBlockedOutput {
+    return this._whatToDoOnBlockedOutput
+  }
+
   outwardNodes: BaseNode[]
   abstract capacity: number
-  protected abstract _whatToDoOnBlockedOutput: WhatToDoOnBlockedOutput
   protected abstract canReceiveTicket(): boolean
   protected _sysMassService: SystemOfMassService
   refToContainer: Ref<HTMLElement | null> = ref(null)
@@ -188,7 +192,7 @@ export abstract class BaseNode implements Tickable, VisualContainer {
     this._sysMassService.addNode(this)
   }
 
-  tryPushTicketOutward(): PushResult {
+  protected tryPushTicketOutward(): PushResult {
     const ticket = this.ticketsInside.value[0]
     if (ticket) {
       const nodeReadyToReceiveTicket = this.findOutwardNodeReadyToReceiveTicket()
@@ -221,7 +225,7 @@ export abstract class BaseNode implements Tickable, VisualContainer {
     return PushResult.NO_TICKET_TO_PUSH
   }
 
-  findOutwardNodeReadyToReceiveTicket(): BaseNode | null {
+  protected findOutwardNodeReadyToReceiveTicket(): BaseNode | null {
     let nodeReadyToReceiveTicket: BaseNode | null = null
     for (const i in this.outwardNodes) {
       const node = this.outwardNodes[i]
@@ -240,7 +244,7 @@ export abstract class BaseNode implements Tickable, VisualContainer {
     }
   }
 
-  receiveTicket(ticket: Ticket) {
+  protected receiveTicket(ticket: Ticket) {
     this.ticketsInside.value.push(ticket)
     if (this.ticketsInside.value.length > this.capacity) {
       throw new Error('Node is overfull')

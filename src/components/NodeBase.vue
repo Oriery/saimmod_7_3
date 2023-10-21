@@ -4,6 +4,7 @@
     :class="NODE_TYPE_TO_BG_COLOR[node.nodeType]"
   >
     <p>{{ NODE_TYPE_TO_NAME[node.nodeType] }} {{ node.id }}</p>
+    <p v-if="node.nodeType !== NodeType.QUEUE && node.outwardNodes.length > 0">{{ WhatToDoOnBlockedOutput[node.whatToDoOnBlockedOutput] }}</p>
     <div
       v-if="node.outwardNodes.length"
       class=""
@@ -66,6 +67,7 @@ import {
   Generator,
   TicketDestoyReason,
   Processor,
+  WhatToDoOnBlockedOutput,
 } from '@/types/systemsOfMassService'
 import TicketComponent from './TicketComponent.vue'
 import { ref, h, render, onMounted } from 'vue'
