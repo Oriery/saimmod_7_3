@@ -48,7 +48,6 @@ import NodeBase from '../components/NodeBase.vue'
 import { SystemOfMassServiceAnalyzer } from '@/types/systemOfMassServiceAnalyzer'
 import SystemAnalytics from '@/components/SystemAnalytics.vue'
 
-let interval: number | null = null
 const ticksPerSecondExponent = ref(0)
 const ticksPerSecond = computed(() => {
   return 2 ** ticksPerSecondExponent.value
@@ -81,7 +80,8 @@ const sysMasSerAnalyzer = new SystemOfMassServiceAnalyzer(sysMasSer)
 sysMasSerAnalyzer.reset()
 sysMasSerAnalyzer.recordState()
 
-interval = setInterval(oneTickHandler, 1000 / ticksPerSecond.value)
+
+let interval = setInterval(oneTickHandler, 1000 / ticksPerSecond.value)
 
 onUnmounted(() => {
   if (interval) {
