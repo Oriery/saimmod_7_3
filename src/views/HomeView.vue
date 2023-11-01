@@ -57,7 +57,7 @@ const isRunning = ref(true)
 let sysMasSer: SystemOfMassService | null = null
 
 sysMasSer = new SystemOfMassService()
-
+/* testing
 const generator = new Generator(sysMasSer, 0.2, WhatToDoOnBlockedOutput.WAIT)
 const generator2 = new Generator(sysMasSer, 0.8, WhatToDoOnBlockedOutput.DROP)
 const queue0 = new Queue(sysMasSer, 2)
@@ -75,6 +75,18 @@ processor.addOutwardNode(queue)
 processor4.addOutwardNode(queue)
 queue.addOutwardNode(processor2)
 queue.addOutwardNode(processor3)
+*/
+
+/* laba 3 */
+const gen = new Generator(sysMasSer, 0.2, WhatToDoOnBlockedOutput.WAIT)
+const queue = new Queue(sysMasSer, 1)
+const proc1 = new Processor(sysMasSer, 0.6, WhatToDoOnBlockedOutput.DROP)
+const proc2 = new Processor(sysMasSer, 0.4)
+
+gen.addOutwardNode(queue)
+queue.addOutwardNode(proc1)
+proc1.addOutwardNode(proc2)
+
 
 const sysMasSerAnalyzer = new SystemOfMassServiceAnalyzer(sysMasSer)
 sysMasSerAnalyzer.reset()
