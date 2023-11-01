@@ -22,7 +22,7 @@ import { RouterLink, RouterView } from 'vue-router'
 //import TestTransition from './components/TestTransition.vue'
 
 const links = [
-  { name: 'Home', path: '/' },
-  { name: 'About', path: '/about' },
+  { name: 'Discrete', path: '/discrete' },
+  { name: 'Continuous', path: '/continuous' },
 ]
 </script>
