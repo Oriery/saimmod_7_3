@@ -122,8 +122,8 @@ watch(ticksPerSecond, (newVal) => {
 
 // when SPACE is pressed - pause/unpause
 window.addEventListener('keydown', (e) => {
-  e.preventDefault()
   if (e.code === 'Space') {
+    e.preventDefault()
     isRunning.value = !isRunning.value
   }
 })
