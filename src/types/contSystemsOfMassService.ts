@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import { ref } from 'vue'
 import type { VisualContainer } from './visualized'
+import { ContinuousDistributionHelper, Distribution, ExponentialDistr } from '@/utils/distributions'
 
 interface WithId {
   id: string
@@ -217,13 +218,36 @@ export abstract class BaseNode implements VisualContainer {
     this.outwardNodes.push(node)
   }
 
-  // TODO
-  //abstract start(): void
+  abstract start(): void
+}
+
+class SometimesActingHelper {
+  private _action: (() => void) | null = null
+  private _contDistrHelper: ContinuousDistributionHelper
+  private _interval : null | NodeJS.Timer = null
+
+  constructor(distr: Distribution, action: () => void) {
+    this._contDistrHelper = new ContinuousDistributionHelper(distr)
+    this._action = action
+  }
+
+  start() {
+    this._interval = setTimeout(() => {
+      this._action?.()
+    }, this._contDistrHelper.getNextRandomResult() * 1000)
+  }
+
+  stop() {
+    if (this._interval) {
+      clearTimeout(this._interval)
+    }
+  }
 }
 
 export class Generator extends BaseNode {
-  probabilityOfNotGeneratingTicket: number
+  generatingIntensity: number
   capacity: number
+  private _sometimesActingHelper: SometimesActingHelper
 
   private _nodeType: NodeType = NodeType.GENERATOR
   public get nodeType(): NodeType {
@@ -234,11 +258,22 @@ export class Generator extends BaseNode {
 
   constructor(
     sysMassService: SystemOfMassService,
-    probabilityOfNotGeneratingTicket: number,
+    generatingIntensity: number,
   ) {
     super(sysMassService)
-    this.probabilityOfNotGeneratingTicket = probabilityOfNotGeneratingTicket
+    this.generatingIntensity = generatingIntensity
     this.capacity = 0
+    this._sometimesActingHelper = new SometimesActingHelper(
+      new ExponentialDistr(generatingIntensity),
+      () => {
+        this._sometimesActingHelper.start()
+        this.generateTicket()
+      },
+    )
+  }
+
+  start() {
+    this._sometimesActingHelper.start()
   }
 
   canReceiveTicket() {
@@ -246,8 +281,8 @@ export class Generator extends BaseNode {
     return false
   }
 
-  // TODO call
   private generateTicket() {
+    console.log('Generating ticket')
     const newTicket = new Ticket(this)
     this.ticketsInside.value.push(newTicket)
     this.onTicketCreated.forEach((cb) => cb(newTicket))
@@ -287,11 +322,16 @@ export class Queue extends BaseNode {
   protected afterReceiveTicket(): void {
     this.tryPushTicketOutward()
   }
+
+  start(): void {
+    // do nothing
+  }
 }
 
 export class Processor extends BaseNode {
-  probabilityOfNotProcessingTicket: number
+  processingIntensity: number
   capacity: number
+  private _sometimesActingHelper: SometimesActingHelper
 
   private _nodeType: NodeType = NodeType.PROCESSOR
   public get nodeType(): NodeType {
@@ -300,11 +340,19 @@ export class Processor extends BaseNode {
 
   constructor(
     sysMassService: SystemOfMassService,
-    probabilityOfNotProcessingTicket: number,
+    processingIntensity: number,
   ) {
     super(sysMassService)
-    this.probabilityOfNotProcessingTicket = probabilityOfNotProcessingTicket
+    this.processingIntensity = processingIntensity
     this.capacity = 1
+    this._sometimesActingHelper = new SometimesActingHelper(
+      new ExponentialDistr(processingIntensity),
+      () => this.processTicket(),
+    )
+  }
+
+  start() {
+    // do nothing
   }
 
   canReceiveTicket() {
@@ -312,6 +360,10 @@ export class Processor extends BaseNode {
   }
 
   private processTicket() {
+    console.log('Processing ticket')
+
+    if (this.ticketsInside.value.length === 0) return
+
     // If no outward nodes, ticket leaves the system
     if (this.outwardNodes.length === 0) {
       const ticket = this.ticketsInside.value.shift()
@@ -323,5 +375,11 @@ export class Processor extends BaseNode {
     } else {
       throw new Error('Not implemented')
     }
+  }
+
+  protected receiveTicket(ticket: Ticket): void {
+    super.receiveTicket(ticket)
+
+    this._sometimesActingHelper.start()
   }
 }

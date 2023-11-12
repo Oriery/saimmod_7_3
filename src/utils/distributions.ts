@@ -43,7 +43,7 @@ export class ContinuousDistributionHelper {
   }
 }
 
-abstract class Distribution {
+export abstract class Distribution {
   protected _params: any[]
 
   constructor(...params: any) {

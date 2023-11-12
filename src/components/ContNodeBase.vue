@@ -4,39 +4,16 @@
     :class="NODE_TYPE_TO_BG_COLOR[node.nodeType]"
   >
     <p>{{ NODE_TYPE_TO_NAME[node.nodeType] }} {{ node.id }}</p>
-    <p v-if="node.nodeType === NodeType.PROCESSOR && node.outwardNodes.length > 0">
-      On blocked: {{ WhatToDoOnBlockedOutput[node.whatToDoOnBlockedOutput] }}
-    </p>
-    <p v-if="node.nodeType === NodeType.GENERATOR && node.outwardNodes.length > 0">
-      On blocked: {{ ["Do not generate", "Generate but drop"][node.whatToDoOnBlockedOutput] }}
-    </p>
     <p v-if="node.nodeType === NodeType.GENERATOR">
-      Probability of not generating: {{ (node as Generator).probabilityOfNotGeneratingTicket }}
+      Generating intensity: {{ (node as Generator).generatingIntensity }}
     </p>
     <p v-if="node.nodeType === NodeType.PROCESSOR">
-      Probability of not processing: {{ (node as Processor).probabilityOfNotProcessingTicket }}
-    </p>
-    <p v-if="node.outwardNodes.length">
-      Blocked time: {{ shortenNumber(node.blockedTimeRatio.value) }}
-    </p>
-    <p v-if="node.nodeType !== NodeType.GENERATOR">
-      Avg tickets inside: {{ shortenNumber(node.avgTicketsInside.value) }}
-    </p>
-    <p v-if="node.nodeType === NodeType.QUEUE">
-      Full time: {{ shortenNumber(node.beingFullRatio.value) }}
+      Processing intensity: {{ (node as Processor).processingIntensity }}
     </p>
     <div v-if="node.outwardNodes.length">
       <div class="grid grid-cols-3">
         <div></div>
         <div>Outward nodes:</div>
-        <Transition>
-          <div
-            v-if="node.hasBlockedOutput.value"
-            class="flex flex-row-reverse"
-          >
-            <div class="text-grey-300 font-bold">Blocked</div>
-          </div>
-        </Transition>
       </div>
       <div class="flex flex-col align-end">
         <p
@@ -57,19 +34,6 @@
           : ' children-are-absolute relative'
       "
     >
-      <Transition>
-        <div
-          v-if="
-            node.nodeType === NodeType.PROCESSOR &&
-            (node as Processor).couldNotPushTicketOutwardOnPrevTick.value
-          "
-          class="absolute bottom-0 left-0 right-0 flex justify-center"
-        >
-          <p class="font-bold text-grey-300 bg-red-900 rounded py-2 px-4">
-            Ready but blocked output
-          </p>
-        </div>
-      </Transition>
     </div>
   </div>
 </template>
@@ -83,7 +47,6 @@ import {
   Generator,
   TicketDestoyReason,
   Processor,
-  WhatToDoOnBlockedOutput,
 } from '@/types/contSystemsOfMassService'
 import TicketComponent from './ContTicketComponent.vue'
 import { ref, h, render, onMounted } from 'vue'

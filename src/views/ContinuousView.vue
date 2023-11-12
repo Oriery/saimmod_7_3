@@ -17,7 +17,6 @@
 import {
   Generator,
   Processor,
-  WhatToDoOnBlockedOutput,
   SystemOfMassService,
   Queue,
 } from '../types/contSystemsOfMassService'
@@ -28,13 +27,15 @@ let sysMasSer: SystemOfMassService | null = null
 sysMasSer = new SystemOfMassService()
 
 /* setup for laba 4 */
-const gen = new Generator(sysMasSer, 0.2, WhatToDoOnBlockedOutput.WAIT)
+const gen = new Generator(sysMasSer, 0.6)
 const queue = new Queue(sysMasSer, 1)
-const proc1 = new Processor(sysMasSer, 0.6, WhatToDoOnBlockedOutput.DROP)
+const proc1 = new Processor(sysMasSer, 0.6)
 const proc2 = new Processor(sysMasSer, 0.4)
 
 gen.addOutwardNode(queue)
 queue.addOutwardNode(proc1)
-proc1.addOutwardNode(proc2)
+queue.addOutwardNode(proc2)
+
+sysMasSer.start()
 
 </script>
