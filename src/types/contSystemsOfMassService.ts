@@ -11,6 +11,7 @@ enum PushResult {
   PUSHED,
   NO_TICKET_TO_PUSH,
   DROPPED,
+  BLOCKED,
 }
 
 export enum NodeType {
@@ -144,6 +145,7 @@ export abstract class BaseNode implements VisualContainer {
   }
 
   outwardNodes: BaseNode[]
+  protected _inwardNodes: BaseNode[] = []
   abstract capacity: number
   protected abstract canReceiveTicket(): boolean
   protected _sysMassService: SystemOfMassService
@@ -171,12 +173,16 @@ export abstract class BaseNode implements VisualContainer {
         nodeReadyToReceiveTicket.receiveTicket(ticket)
         return PushResult.PUSHED
       } else {
-        const ticketFromInside = this.ticketsInside.value.shift()
-        if (ticketFromInside !== ticket) {
-          throw new Error('Ticket was not the same as the one that was found')
+        if (this.nodeType === NodeType.QUEUE) {
+          return PushResult.BLOCKED
+        } else {
+          const ticketFromInside = this.ticketsInside.value.shift()
+          if (ticketFromInside !== ticket) {
+            throw new Error('Ticket was not the same as the one that was found')
+          }
+          this._sysMassService.removeTicket(ticket, TicketDestoyReason.DROPPED)
+          return PushResult.DROPPED
         }
-        this._sysMassService.removeTicket(ticket, TicketDestoyReason.DROPPED)
-        return PushResult.DROPPED
       }
     }
     return PushResult.NO_TICKET_TO_PUSH
@@ -216,6 +222,28 @@ export abstract class BaseNode implements VisualContainer {
 
   addOutwardNode(node: BaseNode) {
     this.outwardNodes.push(node)
+    node._inwardNodes.push(this)
+  }
+
+  pullTicketFromQueue() : boolean {
+    let didNotPullTicket = true
+    let i = 0
+    while (i < this._inwardNodes.length && didNotPullTicket) {
+      const node = this._inwardNodes[i]
+      if (node.nodeType === NodeType.QUEUE) {
+        const queue = node as Queue
+        const res = queue.tryPushTicketOutward()
+        if (res === PushResult.PUSHED) {
+          didNotPullTicket = false
+        } else if (res === PushResult.DROPPED) {
+          throw new Error('Unexpected result of tryPushTicketOutward: ' + res)
+        }
+      }
+
+      i++
+    }
+
+    return !didNotPullTicket
   }
 
   abstract start(): void
@@ -282,7 +310,6 @@ export class Generator extends BaseNode {
   }
 
   private generateTicket() {
-    console.log('Generating ticket')
     const newTicket = new Ticket(this)
     this.ticketsInside.value.push(newTicket)
     this.onTicketCreated.forEach((cb) => cb(newTicket))
@@ -360,8 +387,6 @@ export class Processor extends BaseNode {
   }
 
   private processTicket() {
-    console.log('Processing ticket')
-
     if (this.ticketsInside.value.length === 0) return
 
     // If no outward nodes, ticket leaves the system
@@ -375,6 +400,8 @@ export class Processor extends BaseNode {
     } else {
       throw new Error('Not implemented')
     }
+
+    this.pullTicketFromQueue()
   }
 
   protected receiveTicket(ticket: Ticket): void {

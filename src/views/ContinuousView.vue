@@ -27,7 +27,7 @@ let sysMasSer: SystemOfMassService | null = null
 sysMasSer = new SystemOfMassService()
 
 /* setup for laba 4 */
-const gen = new Generator(sysMasSer, 0.6)
+const gen = new Generator(sysMasSer, 1)
 const queue = new Queue(sysMasSer, 1)
 const proc1 = new Processor(sysMasSer, 0.6)
 const proc2 = new Processor(sysMasSer, 0.4)
