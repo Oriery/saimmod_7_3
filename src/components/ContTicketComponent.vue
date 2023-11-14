@@ -3,7 +3,7 @@
     class="rounded p-2"
     :style="`background-color: ${color};`"
   >
-    <p>Time alive: {{ ticket.ticksAlive }}</p>
+    <p>Time alive: {{ ticket.timeAlive }}</p>
   </div>
 </template>
 

@@ -3,6 +3,8 @@ import { ref, watch } from 'vue'
 import type { VisualContainer } from './visualized'
 import { ContinuousDistributionHelper, Distribution, ExponentialDistr } from '@/utils/distributions'
 
+export const TICKS_PER_SECOND = 10
+
 interface WithId {
   id: string
 }
@@ -46,7 +48,7 @@ class Living extends Destroyable {
 
     this._interval = setInterval(() => {
       this.timeAlive.value++
-    }, 1000)
+    }, 1000 / TICKS_PER_SECOND)
   }
 
   destroy() {
@@ -296,7 +298,7 @@ class SometimesActingHelper {
   start() {
     this._interval = setTimeout(() => {
       this._action?.()
-    }, this._contDistrHelper.getNextRandomResult() * 1000)
+    }, this._contDistrHelper.getNextRandomResult() * 1000 / TICKS_PER_SECOND)
   }
 
   stop() {
@@ -523,4 +525,93 @@ class BreakingProcessor extends Processor {
     return !this.isBroken.value && super.canReceiveTicket()
   }
 
+}
+
+enum BreakingProcessorState {
+  WORKING_FULL,
+  WORKING_EMPTY,
+  BROKEN,
+}
+
+export class AnalyzableBreakingProcessor extends BreakingProcessor {
+  private _state = BreakingProcessorState.WORKING_EMPTY
+  private _sumOfTimeSpentInEachState: Record<BreakingProcessorState, number> = {
+    [BreakingProcessorState.WORKING_FULL]: 0,
+    [BreakingProcessorState.WORKING_EMPTY]: 0,
+    [BreakingProcessorState.BROKEN]: 0,
+  }
+  private _lastStateChangeTime = 0
+  relativeTimeBeingBroken = ref(0)
+  relativeTimeBeingWorkingAndFull = ref(0)
+  relativeTimeBeingWorkingAndEmpty = ref(1)
+
+  constructor(
+    sysMassService: SystemOfMassService,
+    processingIntensity: number,
+    breakingIntensity: number,
+    fixingIntensity: number,
+  ) {
+    super(sysMassService, processingIntensity, breakingIntensity, fixingIntensity)
+
+    watch(this.isBroken, () => this._handlePossibleStateChange())
+  }
+
+  private _handlePossibleStateChange() {
+    const newState = this.getCurrentState()
+    if (newState !== this._state) {
+      this._handleStateChange(newState)
+    }
+  }
+
+  private _handleStateChange(newState: BreakingProcessorState) {
+    this._sumOfTimeSpentInEachState[this._state] += this.timeAlive.value - this._lastStateChangeTime
+    this._state = newState
+    this._lastStateChangeTime = this.timeAlive.value
+
+    this._updateRelativeTimes()
+  }
+
+  private _updateRelativeTimes() {
+    const timeSpentInEachState = this._sumOfTimeSpentInEachState
+    const totalTimeSpent = Object.values(timeSpentInEachState).reduce((a, b) => a + b, 0)
+    this.relativeTimeBeingBroken.value = timeSpentInEachState[BreakingProcessorState.BROKEN] / totalTimeSpent
+    this.relativeTimeBeingWorkingAndFull.value = timeSpentInEachState[BreakingProcessorState.WORKING_FULL] / totalTimeSpent
+    this.relativeTimeBeingWorkingAndEmpty.value = timeSpentInEachState[BreakingProcessorState.WORKING_EMPTY] / totalTimeSpent
+  }
+
+  private getCurrentState(): BreakingProcessorState {
+    if (this.isBroken.value) {
+      return BreakingProcessorState.BROKEN
+    } else if (this.ticketsInside.value.length > 0) {
+      return BreakingProcessorState.WORKING_FULL
+    } else {
+      return BreakingProcessorState.WORKING_EMPTY
+    }
+  }
+  
+  protected receiveTicket(ticket: Ticket): void {
+    super.receiveTicket(ticket)
+
+    this._handlePossibleStateChange()
+  }
+
+  protected tryPushOneTicketIntoGivenNode(node: BaseNode): PushResult {
+    const res = super.tryPushOneTicketIntoGivenNode(node)
+
+    if (res === PushResult.PUSHED || res === PushResult.DROPPED) {
+      this._handlePossibleStateChange()
+    }
+
+    return res
+  }
+
+  protected tryPushTicketOutward(): PushResult {
+    const res = super.tryPushTicketOutward()
+
+    if (res === PushResult.PUSHED || res === PushResult.DROPPED) {
+      this._handlePossibleStateChange()
+    }
+
+    return res
+  }
 }

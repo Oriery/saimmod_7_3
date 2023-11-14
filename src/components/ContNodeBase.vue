@@ -10,6 +10,21 @@
     <p v-if="node.nodeType === NodeType.PROCESSOR">
       Processing intensity: {{ (node as Processor).processingIntensity }}
     </p>
+    <div v-if="node.nodeType === NodeType.PROCESSOR">
+      <p>Is broken: {{ (node as AnalyzableBreakingProcessor).isBroken }}</p>
+      <p>
+        Being broken:
+        {{ shortenNumber((node as AnalyzableBreakingProcessor).relativeTimeBeingBroken.value) }}
+      </p>
+      <p>
+        Being empty fixed:
+        {{ shortenNumber((node as AnalyzableBreakingProcessor).relativeTimeBeingWorkingAndEmpty.value) }}
+      </p>
+      <p>
+        Being full:
+        {{ shortenNumber((node as AnalyzableBreakingProcessor).relativeTimeBeingWorkingAndFull.value) }}
+      </p>
+    </div>
     <div v-if="node.outwardNodes.length">
       <div class="grid grid-cols-3">
         <div></div>
@@ -33,8 +48,7 @@
           ? ' flex gap-2 flex-col'
           : ' children-are-absolute relative'
       "
-    >
-    </div>
+    ></div>
   </div>
 </template>
 
@@ -47,6 +61,7 @@ import {
   Generator,
   TicketDestoyReason,
   Processor,
+  AnalyzableBreakingProcessor,
 } from '@/types/contSystemsOfMassService'
 import TicketComponent from './ContTicketComponent.vue'
 import { ref, h, render, onMounted } from 'vue'
