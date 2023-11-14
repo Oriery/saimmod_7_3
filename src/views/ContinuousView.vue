@@ -29,8 +29,8 @@ sysMasSer = new SystemOfMassService()
 /* setup for laba 4 */
 const gen = new Generator(sysMasSer, 1.5)
 const queue = new Queue(sysMasSer, 1)
-const proc1 = new AnalyzableBreakingProcessor(sysMasSer, 0.8, 0.1, 0.4)
-const proc2 = new AnalyzableBreakingProcessor(sysMasSer, 0.8, 0.1, 0.4)
+const proc1 = new AnalyzableBreakingProcessor(sysMasSer, 0.8, 0.01, 0.1)
+const proc2 = new AnalyzableBreakingProcessor(sysMasSer, 0.8, 0.01, 0.1)
 
 proc1.setNodeToPushTicketToWhenBroken(queue)
 proc2.setNodeToPushTicketToWhenBroken(queue)

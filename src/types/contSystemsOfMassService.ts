@@ -3,7 +3,8 @@ import { ref, watch } from 'vue'
 import type { VisualContainer } from './visualized'
 import { ContinuousDistributionHelper, Distribution, ExponentialDistr } from '@/utils/distributions'
 
-export const TICKS_PER_SECOND = 10
+export const TICKS_PER_SECOND = 20
+const INCREMENTS_PER_TICK = 1
 
 interface WithId {
   id: string
@@ -47,8 +48,8 @@ class Living extends Destroyable {
     super()
 
     this._interval = setInterval(() => {
-      this.timeAlive.value++
-    }, 1000 / TICKS_PER_SECOND)
+      this.timeAlive.value = fixNumber(this.timeAlive.value + 1 / INCREMENTS_PER_TICK, 3)
+    }, 1000 / TICKS_PER_SECOND / INCREMENTS_PER_TICK)
   }
 
   destroy() {
@@ -62,6 +63,10 @@ class Living extends Destroyable {
   resetTimeAlive() {
     this.timeAlive.value = 0
   }
+}
+
+function fixNumber(n: number, digits: number) {
+  return Number.parseFloat(n.toFixed(digits))
 }
 
 export class SystemOfMassService extends Living {
@@ -422,7 +427,7 @@ export class Processor extends BaseNode {
     return this.ticketsInside.value.length === 0
   }
 
-  private processTicket() {
+  protected processTicket() {
     if (this.ticketsInside.value.length === 0) return
 
     // If no outward nodes, ticket leaves the system
@@ -489,7 +494,7 @@ class BreakingProcessor extends Processor {
     this._nodeToPushTicketToWhenBroken = node
   }
 
-  private break() {
+  protected break() {
     this.isBroken.value = true
     this._breakingHelper.stop()
     this._fixingHelper.start()
@@ -497,7 +502,7 @@ class BreakingProcessor extends Processor {
     this.stopProcessingTickets()
   }
 
-  private fix() {
+  protected fix() {
     this.isBroken.value = false
     this._fixingHelper.stop()
     this._breakingHelper.start()
@@ -544,17 +549,6 @@ export class AnalyzableBreakingProcessor extends BreakingProcessor {
   relativeTimeBeingBroken = ref(0)
   relativeTimeBeingWorkingAndFull = ref(0)
   relativeTimeBeingWorkingAndEmpty = ref(1)
-
-  constructor(
-    sysMassService: SystemOfMassService,
-    processingIntensity: number,
-    breakingIntensity: number,
-    fixingIntensity: number,
-  ) {
-    super(sysMassService, processingIntensity, breakingIntensity, fixingIntensity)
-
-    watch(this.isBroken, () => this._handlePossibleStateChange())
-  }
 
   private _handlePossibleStateChange() {
     const newState = this.getCurrentState()
@@ -613,5 +607,23 @@ export class AnalyzableBreakingProcessor extends BreakingProcessor {
     }
 
     return res
+  }
+
+  protected break(): void {
+    super.break()
+
+    this._handlePossibleStateChange()
+  }
+
+  protected fix(): void {
+    super.fix()
+
+    this._handlePossibleStateChange()
+  }
+
+  protected processTicket(): void {
+    super.processTicket()
+
+    this._handlePossibleStateChange()
   }
 }
