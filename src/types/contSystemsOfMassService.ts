@@ -1,5 +1,5 @@
 import type { Ref } from 'vue'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import type { VisualContainer } from './visualized'
 import { ContinuousDistributionHelper, Distribution, ExponentialDistr } from '@/utils/distributions'
 
@@ -80,7 +80,7 @@ export class SystemOfMassService extends Living {
   }
 
   removeTicket(ticket: Ticket, reason: TicketDestoyReason) {
-    ticket.destroy(reason)
+    ticket.destroyTicketWithReason(reason)
 
     this._onTicketLeftSystem.forEach((cb) => cb(ticket, reason))
   }
@@ -101,7 +101,7 @@ export enum TicketDestoyReason {
   DROPPED,
 }
 
-export class Ticket {
+export class Ticket extends Living implements WithId {
   private _id: string
   public get id(): string {
     return this._id
@@ -118,11 +118,14 @@ export class Ticket {
   onContainerNodeChanged: ((newContainerNode: BaseNode) => void)[] = []
 
   constructor(containerNode: BaseNode) {
+    super()
     this._id = Math.random().toString(36).slice(2)
     this._containerNode = containerNode
+    this.resetTimeAlive()
   }
 
-  destroy(reason: TicketDestoyReason) {
+  destroyTicketWithReason(reason: TicketDestoyReason) {
+    super.destroy()
     this._onTicketDestroyed.forEach((cb) => cb(reason))
   }
 
@@ -131,7 +134,7 @@ export class Ticket {
   }
 }
 
-export abstract class BaseNode implements VisualContainer {
+export abstract class BaseNode extends Living implements VisualContainer {
   private _id: string
   public get id(): string {
     return this._id
@@ -152,6 +155,8 @@ export abstract class BaseNode implements VisualContainer {
   refToContainer: Ref<HTMLElement | null> = ref(null)
 
   constructor(sysMassService: SystemOfMassService) {
+    super()
+
     this._id = Math.random().toString(36).slice(2)
     this._ticketsInside = ref([])
     this.outwardNodes = []
@@ -171,6 +176,33 @@ export abstract class BaseNode implements VisualContainer {
           throw new Error('Ticket was not the same as the one that was found')
         }
         nodeReadyToReceiveTicket.receiveTicket(ticket)
+        return PushResult.PUSHED
+      } else {
+        if (this.nodeType === NodeType.QUEUE) {
+          return PushResult.BLOCKED
+        } else {
+          const ticketFromInside = this.ticketsInside.value.shift()
+          if (ticketFromInside !== ticket) {
+            throw new Error('Ticket was not the same as the one that was found')
+          }
+          this._sysMassService.removeTicket(ticket, TicketDestoyReason.DROPPED)
+          return PushResult.DROPPED
+        }
+      }
+    }
+    return PushResult.NO_TICKET_TO_PUSH
+  }
+
+  protected tryPushOneTicketIntoGivenNode(node: BaseNode): PushResult {
+    const ticket = this.ticketsInside.value[0]
+    if (ticket) {
+      if (node.canReceiveTicket()) {
+        // move ticket to outward node
+        const ticketFromInside = this.ticketsInside.value.shift()
+        if (ticketFromInside !== ticket) {
+          throw new Error('Ticket was not the same as the one that was found')
+        }
+        node.receiveTicket(ticket)
         return PushResult.PUSHED
       } else {
         if (this.nodeType === NodeType.QUEUE) {
@@ -246,7 +278,9 @@ export abstract class BaseNode implements VisualContainer {
     return !didNotPullTicket
   }
 
-  abstract start(): void
+  start() {
+    this.resetTimeAlive()
+  }
 }
 
 class SometimesActingHelper {
@@ -275,7 +309,7 @@ class SometimesActingHelper {
 export class Generator extends BaseNode {
   generatingIntensity: number
   capacity: number
-  private _sometimesActingHelper: SometimesActingHelper
+  private _generatingHelper: SometimesActingHelper
 
   private _nodeType: NodeType = NodeType.GENERATOR
   public get nodeType(): NodeType {
@@ -291,17 +325,17 @@ export class Generator extends BaseNode {
     super(sysMassService)
     this.generatingIntensity = generatingIntensity
     this.capacity = 0
-    this._sometimesActingHelper = new SometimesActingHelper(
+    this._generatingHelper = new SometimesActingHelper(
       new ExponentialDistr(generatingIntensity),
       () => {
-        this._sometimesActingHelper.start()
+        this._generatingHelper.start()
         this.generateTicket()
       },
     )
   }
 
   start() {
-    this._sometimesActingHelper.start()
+    this._generatingHelper.start()
   }
 
   canReceiveTicket() {
@@ -358,7 +392,7 @@ export class Queue extends BaseNode {
 export class Processor extends BaseNode {
   processingIntensity: number
   capacity: number
-  private _sometimesActingHelper: SometimesActingHelper
+  protected _processingHelper: SometimesActingHelper
 
   private _nodeType: NodeType = NodeType.PROCESSOR
   public get nodeType(): NodeType {
@@ -372,7 +406,7 @@ export class Processor extends BaseNode {
     super(sysMassService)
     this.processingIntensity = processingIntensity
     this.capacity = 1
-    this._sometimesActingHelper = new SometimesActingHelper(
+    this._processingHelper = new SometimesActingHelper(
       new ExponentialDistr(processingIntensity),
       () => this.processTicket(),
     )
@@ -407,6 +441,86 @@ export class Processor extends BaseNode {
   protected receiveTicket(ticket: Ticket): void {
     super.receiveTicket(ticket)
 
-    this._sometimesActingHelper.start()
+    this._processingHelper.start()
   }
+}
+
+class BreakingProcessor extends Processor {
+  private _breakingHelper: SometimesActingHelper
+  private _fixingHelper: SometimesActingHelper
+  isBroken = ref(false)
+  private _nodeToPushTicketToWhenBroken: BaseNode | null = null
+
+  breakingIntensity: number
+  fixingIntensity: number
+
+  constructor(
+    sysMassService: SystemOfMassService,
+    processingIntensity: number,
+    breakingIntensity: number,
+    fixingIntensity: number,
+  ) {
+    super(sysMassService, processingIntensity)
+    this.breakingIntensity = breakingIntensity
+    this.fixingIntensity = fixingIntensity
+    this._breakingHelper = new SometimesActingHelper(
+      new ExponentialDistr(breakingIntensity),
+      () => this.break(),
+    )
+    this._fixingHelper = new SometimesActingHelper(
+      new ExponentialDistr(fixingIntensity),
+      () => this.fix(),
+    )
+  }
+
+  start() {
+    super.start()
+
+    if (this._nodeToPushTicketToWhenBroken === null) {
+      throw new Error('Node to push ticket to when broken is not set')
+    }
+
+    this._breakingHelper.start()
+  }
+
+  setNodeToPushTicketToWhenBroken(node: BaseNode) {
+    this._nodeToPushTicketToWhenBroken = node
+  }
+
+  private break() {
+    this.isBroken.value = true
+    this._breakingHelper.stop()
+    this._fixingHelper.start()
+
+    this.stopProcessingTickets()
+  }
+
+  private fix() {
+    this.isBroken.value = false
+    this._fixingHelper.stop()
+    this._breakingHelper.start()
+
+    this.startProcessingTickets()
+  }
+
+  private startProcessingTickets() {
+    this.pullTicketFromQueue()
+  }
+
+  private stopProcessingTickets() {
+    if (!this._nodeToPushTicketToWhenBroken) {
+      throw new Error('Node to push ticket to when broken is not set')
+    }
+
+    this._processingHelper.stop()
+
+    if (this.ticketsInside.value.length > 0) {
+      this.tryPushOneTicketIntoGivenNode(this._nodeToPushTicketToWhenBroken)
+    }
+  }
+
+  canReceiveTicket(): boolean {
+    return !this.isBroken.value && super.canReceiveTicket()
+  }
+
 }
