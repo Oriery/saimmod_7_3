@@ -1,0 +1,58 @@
+l = 1.5; (* generation intensity *)
+m = 0.8; (* processing intensity *)
+v = 0.01; (* breaking intensity *)
+y = 0.1; (* repair intensity *)
+
+(* Generator puts in Processor1 with higher priority than Processor2 *)
+
+(* States:
+p000 - 0 in Queue, 0 in Processor1, 0 in Processor2
+p001 - 0 in Queue, 0 in Processor1, 1 in Processor2
+p010 - 0 in Queue, 1 in Processor1, 0 in Processor2
+p011 - 0 in Queue, 1 in Processor1, 1 in Processor2
+p111 - 1 in Queue, 1 in Processor1, 1 in Processor2
+p00r - 0 in Queue, 0 in Processor1, Processor2 brok
+p0r0 - 0 in Queue, Processor1 brok, 0 in Processor2
+p01r - 0 in Queue, 1 in Processor1, Processor2 brok
+p0r1 - 0 in Queue, Processor1 brok, 1 in Processor2
+p11r - 1 in Queue, 1 in Processor1, Processor2 brok
+p1r1 - 1 in Queue, Processor1 brok, 1 in Processor2
+p0rr - 0 in Queue, Processor1 brok, Processor2 brok
+p1rr - 1 in Queue, Processor1 brok, Processor2 brok
+*)
+
+(* Equations: *)
+eq0 = p000 + p001 + p010 + p011 + p111 + p00r + p0r0 + p01r + p0r1 + p11r + p1r1 + p0rr + p1rr == 1;
+
+eq1 = p000 * (l+v+v) == p00r*y + p0r0*y + p010*m + p001*m;
+eq2 = p001 * (l+m+v+v) == p011*m + p0r1*y;
+eq3 = p010 * (l+m+v+v) == p000*l + p01r*y + p011*m;
+eq4 = p011 * (l+m+m+v+v) == p010*l + p001*l + p111*2m + p1r1*y + p11r*y;
+eq5 = p111 * (2m+v+v) == p011*l;
+eq6 = p00r * (y+v+l) == p000*v + p0rr*y + p01r*m;
+eq7 = p0r0 * (y+v+l) == p000*v + p0rr*y + p0r1*m;
+eq8 = p01r * (y+v+l+m) == p010*v + p00r*l + p11r*m + p001*v + p1rr*y;
+eq9 = p0r1 * (y+v+l+m) == p001*v + p0r0*l + p1r1*m + p010*v + p1rr*y;
+eq10 = p11r * (y+v+m) == p011*v + p01r*l + p111*v;
+eq11 = p1r1 * (y+v+m) == p011*v + p0r1*l + p111*v;
+eq12 = p0rr * (l+y+y) == p00r*v + p0r0*v;
+eq13 = p1rr * (y+y) == p0rr*l + p1r1*v + p11r*v + p0r1*v + p01r*v;
+
+(* Solve: *)
+res = Solve[{eq0, eq1, eq2, eq3, eq4, eq5, eq6, eq7, eq8, eq9, eq10, eq11, eq12, eq13},
+  {p000, p001, p010, p011, p111, p00r, p0r0, p01r, p0r1, p11r, p1r1, p0rr, p1rr}][[1]]
+
+(* Results: *)
+proc1Broke = p0r0 + p0r1 + p0rr + p1r1 + p1rr /. res
+proc1WorkingEmpty = p000 + p001 + p00r /. res
+proc1WorkingFull = p010 + p011 + p111 + p01r + p11r /. res
+
+proc2Broke = p00r + p01r + p0rr + p11r + p1rr /. res
+proc2WorkingEmpty = p000 + p010 + p0r0 /. res
+proc2WorkingFull = p001 + p011 + p111 + p0r1 + p1r1 /. res
+
+absoluteThroughputOfProc1 = proc1WorkingFull * m * (m / (m + v))
+absoluteThroughputOfProc2 = proc2WorkingFull * m * (m / (m + v))
+absoluteThroughput = absoluteThroughputOfProc1 + absoluteThroughputOfProc2
+
+relativeThroughput = absoluteThroughput / l
