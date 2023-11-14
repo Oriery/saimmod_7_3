@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     14674,        413]
-NotebookOptionsPosition[     13308,        385]
-NotebookOutlinePosition[     13702,        401]
-CellTagsIndexPosition[     13659,        398]
+NotebookDataLength[     16423,        459]
+NotebookOptionsPosition[     14737,        426]
+NotebookOutlinePosition[     15132,        442]
+CellTagsIndexPosition[     15089,        439]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -381,10 +381,51 @@ Cell[BoxData[
  CellChangeTimes->{3.908963880431127*^9},
  CellLabel->
   "Out[133]=",ExpressionUUID->"9fe18e62-41c2-40c4-bc18-4274d6f00a88"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"absoluteThroughputOfProc1", "=", 
+   RowBox[{"proc1WorkingFull", "*", "m", "*", 
+    RowBox[{"(", 
+     RowBox[{"m", "/", 
+      RowBox[{"(", 
+       RowBox[{"m", "+", "v"}], ")"}]}], ")"}]}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"absoluteThroughputOfProc2", "=", 
+   RowBox[{"proc2WorkingFull", "*", "m", "*", 
+    RowBox[{"(", 
+     RowBox[{"m", "/", 
+      RowBox[{"(", 
+       RowBox[{"m", "+", "v"}], ")"}]}], ")"}]}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"absoluteThroughput", "=", 
+   RowBox[{"absoluteThroughputOfProc1", "+", "absoluteThroughputOfProc2"}]}], 
+  "\[IndentingNewLine]"}], "\n", 
+ RowBox[{"relativeThroughput", "=", 
+  RowBox[{"absoluteThroughput", "/", "l"}]}]}], "Input",
+ CellChangeTimes->{{3.908967377137659*^9, 3.908967377140943*^9}, 
+   3.908967771931963*^9, {3.908968409115368*^9, 3.908968410293532*^9}},
+ CellLabel->
+  "In[141]:=",ExpressionUUID->"7aea2897-79a6-4db7-8a0f-ca35746d614d"],
+
+Cell[BoxData["1.0119882989629265`"], "Output",
+ CellChangeTimes->{3.908967377727399*^9, 3.908967772496481*^9, 
+  3.908968410737384*^9},
+ CellLabel->
+  "Out[143]=",ExpressionUUID->"db35c95f-50fc-4470-8acb-ec24c48b24b7"],
+
+Cell[BoxData["0.6746588659752843`"], "Output",
+ CellChangeTimes->{3.908967377727399*^9, 3.908967772496481*^9, 
+  3.908968410738894*^9},
+ CellLabel->
+  "Out[144]=",ExpressionUUID->"054f8a13-4640-4774-8029-1d35485da0d8"]
 }, Open  ]]
 },
-WindowSize->{808, 1029},
-WindowMargins->{{Automatic, 314}, {Automatic, 8}},
+WindowSize->{1214, 1029},
+WindowMargins->{{264, Automatic}, {Automatic, 8}},
 FrontEndVersion->"13.3 for Mac OS X x86 (64-bit) (July 24, 2023)",
 StyleDefinitions->"Default.nb",
 ExpressionUUID->"40573a28-cba3-4459-a518-7a0aac3f0aca"
@@ -401,8 +442,8 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[580, 22, 9662, 275, 1876, "Input",ExpressionUUID->"3c1cfd2c-da20-4b3b-97cf-e3d97979441c"],
-Cell[10245, 299, 990, 18, 177, "Output",ExpressionUUID->"ec2399e7-aeee-42a7-b790-42c8889015e4"],
+Cell[580, 22, 9662, 275, 1442, "Input",ExpressionUUID->"3c1cfd2c-da20-4b3b-97cf-e3d97979441c"],
+Cell[10245, 299, 990, 18, 115, "Output",ExpressionUUID->"ec2399e7-aeee-42a7-b790-42c8889015e4"],
 Cell[11238, 319, 174, 3, 52, "Output",ExpressionUUID->"142cb782-ba8a-47f1-a030-e279196b411a"],
 Cell[11415, 324, 171, 3, 52, "Output",ExpressionUUID->"54dbf39a-fe9b-4581-b2fe-67d36beb9d4a"],
 Cell[11589, 329, 173, 3, 52, "Output",ExpressionUUID->"8723d407-21d0-4f2e-81fb-632a29caab50"],
@@ -413,7 +454,12 @@ Cell[12115, 344, 171, 3, 52, "Output",ExpressionUUID->"f0b9c75b-1064-48b0-ba98-7
 Cell[12301, 350, 154, 3, 46, "Input",ExpressionUUID->"8c711b93-a2b5-4dad-abec-502b3afdf894"],
 Cell[CellGroupData[{
 Cell[12480, 357, 483, 14, 46, "Input",ExpressionUUID->"d78d09ac-5a2b-4e8c-bc29-705839fe335e"],
-Cell[12966, 373, 326, 9, 94, "Output",ExpressionUUID->"9fe18e62-41c2-40c4-bc18-4274d6f00a88"]
+Cell[12966, 373, 326, 9, 52, "Output",ExpressionUUID->"9fe18e62-41c2-40c4-bc18-4274d6f00a88"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[13329, 387, 950, 24, 171, "Input",ExpressionUUID->"7aea2897-79a6-4db7-8a0f-ca35746d614d"],
+Cell[14282, 413, 218, 4, 52, "Output",ExpressionUUID->"db35c95f-50fc-4470-8acb-ec24c48b24b7"],
+Cell[14503, 419, 218, 4, 69, "Output",ExpressionUUID->"054f8a13-4640-4774-8029-1d35485da0d8"]
 }, Open  ]]
 }
 ]
