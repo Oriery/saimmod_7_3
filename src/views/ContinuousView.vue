@@ -1,5 +1,10 @@
 <template>
   <main class="flex flex-col gap-4">
+    <div class="text-start">
+      <p>Time: {{ sysMasSer?.timeAlive }}</p>
+      <p>Absolute: {{ shortenNumber(sysMasSer?.absoluteThroughput.value ?? 0) }} tickets/s</p>
+      <p>Relative: {{ shortenNumber(sysMasSer?.relativeThroughput.value ?? 0) }}</p>
+    </div>
     <div
       v-if="sysMasSer"
       class="grid gap-2 grid-cols-2 lg:grid-cols-3"
@@ -16,15 +21,16 @@
 <script setup lang="ts">
 import {
   Generator,
-  SystemOfMassService,
+  AnalyzableSystemOfMassService,
   Queue,
   AnalyzableBreakingProcessor,
 } from '../types/contSystemsOfMassService'
 import NodeBase from '../components/ContNodeBase.vue'
+import shortenNumber from '@/utils/shortenNumber';
 
-let sysMasSer: SystemOfMassService | null = null
+let sysMasSer: AnalyzableSystemOfMassService | null = null
 
-sysMasSer = new SystemOfMassService()
+sysMasSer = new AnalyzableSystemOfMassService()
 
 /* setup for laba 4 */
 const gen = new Generator(sysMasSer, 1.5)

@@ -3,8 +3,8 @@ import { ref, watch } from 'vue'
 import type { VisualContainer } from './visualized'
 import { ContinuousDistributionHelper, Distribution, ExponentialDistr } from '@/utils/distributions'
 
-export const TICKS_PER_SECOND = 20
-const INCREMENTS_PER_TICK = 1
+export const TICKS_PER_SECOND = 16
+const INCREMENTS_PER_TICK = 4
 
 interface WithId {
   id: string
@@ -69,7 +69,7 @@ function fixNumber(n: number, digits: number) {
   return Number.parseFloat(n.toFixed(digits))
 }
 
-export class SystemOfMassService extends Living {
+class SystemOfMassService extends Living {
   private _nodes: BaseNode[]
   public get nodes(): BaseNode[] {
     return this._nodes
@@ -100,6 +100,30 @@ export class SystemOfMassService extends Living {
   start() {
     this.resetTimeAlive()
     this._nodes.forEach((node) => node.start())
+  }
+}
+
+export class AnalyzableSystemOfMassService extends SystemOfMassService {
+  private _ticketsLeftSystem = 0
+  private _ticketsSuccessfullyProcessed = 0
+
+  absoluteThroughput = ref(0)
+  relativeThroughput = ref(0)
+
+  removeTicket(ticket: Ticket, reason: TicketDestoyReason): void {
+    super.removeTicket(ticket, reason)
+
+    this._ticketsLeftSystem++
+    if (reason === TicketDestoyReason.SUCCESSFULLY_PROCESSED) {
+      this._ticketsSuccessfullyProcessed++
+    }
+
+    this._updateThroughput()
+  }
+
+  private _updateThroughput() {
+    this.absoluteThroughput.value = this._ticketsSuccessfullyProcessed / this.timeAlive.value
+    this.relativeThroughput.value = this._ticketsSuccessfullyProcessed / this._ticketsLeftSystem
   }
 }
 
